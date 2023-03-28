@@ -131,6 +131,12 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 }
 
 %ctor {
+	#ifndef __arm64e__
+	// Not an arm64e device
+	// For arm64e devices, system binaries are arm64e too, while user applications are still arm64
+	// Those addresses wouldn't work for non-arm64e devices.
+	return;
+	#endif
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
 	// Currently supported versions:
 	// iOS 14.3.0

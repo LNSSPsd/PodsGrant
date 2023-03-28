@@ -175,6 +175,7 @@ struct full_battery_info {
 		//fprintf(log_file, "POSTMODAdvertisementFields: %s\n",[[NSString stringWithFormat:@"%@", [[d bleDevice] advertisementFields]] UTF8String]);
 		//fflush(log_file);
 	}
+	return %orig;
 }
 
 %end
