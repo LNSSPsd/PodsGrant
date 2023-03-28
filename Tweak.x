@@ -6,22 +6,15 @@
 #include <mach-o/dyld.h>
 #include <Foundation/Foundation.h>
 
+int product_id_offset=844;
 FILE *log_file;
 
 unsigned int (*orig_1002E1F9C)(void *a1, void *a2, void *a3, void *a4, void *a5);
 unsigned int my_1002E1F9C(void *a1, void *a2, void *a3, void *a4, void *a5) {
-	if(*(unsigned int*)(a1+844)==0x2014) {
-		*(unsigned int*)(a1+844)=0x200E;
+	if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
+		*(unsigned int*)(a1+product_id_offset)=0x200E;
 	}
 	return orig_1002E1F9C(a1,a2,a3,a4,a5);
-}
-
-unsigned int (*orig_1002DF630)(void *a1, void *a2);
-unsigned int my_1002DF630(void *a1, void *a2) {
-	if(*(unsigned int*)(a1+844)==0x2014) {
-		*(unsigned int*)(a1+844)=0x200E;
-	}
-	return orig_1002DF630(a1,a2);
 }
 
 unsigned int os_log_type_enabled_hook(/*...*/) {
@@ -53,7 +46,10 @@ void *caseRelatedClassInitHook(void *a1, void *a2, void *a3/* ptr to 128-bit-lon
 
 unsigned int (*abilityFuncOrig)(void *, unsigned int abilityID);
 unsigned int abilityFunc(void *a1, unsigned int abilityID) {
-	if(*(unsigned int*)(a1+844)==0x200E&&abilityID==12) {
+	if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
+		*(unsigned int*)(a1+product_id_offset)=0x200E;
+	}
+	if(*(unsigned int*)(a1+product_id_offset)==0x200E&&abilityID==12) {
 		return 1;
 	}
 	return abilityFuncOrig(a1, abilityID);
@@ -136,13 +132,24 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 
 %ctor {
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
+	// Currently supported versions:
+	// iOS 14.3.0
+	// iOS 15.0.0 (Thanks @bobjenkins603)
+	if(os_version.majorVersion==15&&os_version.minorVersion==0&&os_version.patchVersion==0) {
+		product_id_offset=912;
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100337344), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100334840), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DC9AC), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001C8DA8), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+		return;
+	}
 	if(os_version.majorVersion!=14||os_version.minorVersion!=3||os_version.patchVersion!=0) {
 		// Due to the mass use of address-based hooking (see below), it would surely NOT work at other OS versions.
 		return;
 	}
 	//log_file=fopen("/tmp/bluetoothd_log", "a");
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002E1F9C), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C); 
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DF630), (void *)&my_1002DF630, (void**)&orig_1002DF630); 
+	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002E1F9C), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+	//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DF630), (void *)&my_1002DF630, (void**)&orig_1002DF630);
 	
 	/*MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100539B04), (void*)&os_log_type_enabled_hook, (void**)NULL);
 	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100538D64), (void*)&os_log_impl_hook, (void**)NULL); // 
