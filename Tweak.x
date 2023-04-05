@@ -135,6 +135,18 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 	// Not an arm64e device
 	// For arm64e devices, system binaries are arm64e too, while user applications are still arm64
 	// Those addresses wouldn't work for non-arm64e devices.
+	// So that this would not share the same support list w/ arm64e devices.
+	// Currently supported ARM64 (NON-ARM64E) versions:
+	// iOS 14.8.0 (Thanks @rastafaa)
+	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
+	if(os_version.majorVersion==14&&os_version.minorVersion==8&&os_version.patchVersion==0) {
+		//product_id_offset=844
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DD678), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DADDC), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x10028E014), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001A09C4), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+		return;
+	}
 	return;
 	#endif
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
