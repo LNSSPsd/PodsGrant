@@ -165,8 +165,8 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 		product_id_offset=912;
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100337344), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100334840), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DC9AC), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001C8DA8), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+		//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DC9AC), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
+		//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001C8DA8), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
 		return;
 	}else if(os_version.majorVersion==14&&os_version.minorVersion==4&&os_version.patchVersion==0) {
 		//product_id_offset=844
