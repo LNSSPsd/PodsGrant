@@ -75,6 +75,12 @@ unsigned int shouldSendVolume(float a1, void *a2, void *a3, int a4) {
 	return shouldSend;
 }
 
+unsigned int (*remoteDevVolumeChanged_orig)(void *, void *, void *, float);
+unsigned int remoteDevVolumeChanged(void *a1, void *a2, void *a3, float a4) {
+	LMConnectionSendOneWay(&vol_change_connection, 246, &a1, sizeof(float));
+	return 0;
+}
+
 char *battery_type_arr[]={
 	"Single",
 	"Right",
@@ -151,6 +157,7 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 	#endif
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
 	// Currently supported versions:
+	// iOS 14.1.0 (Thanks @babyf2sh)
 	// iOS 14.3.0
 	// iOS 14.4.0 (Thanks @dqdd123)
 	// iOS 15.0.0 (Thanks @bobjenkins603)
@@ -168,6 +175,14 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002E2B78), (void*)&abilityFunc, (void**)&abilityFuncOrig);
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100292FA8), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001AE588), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+		return;
+	}else if(os_version.majorVersion==14&&os_version.minorVersion==1&&os_version.patchVersion==0) {
+		//product_id_offset=844
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002D65B0), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002D3CB4), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		// MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002859EC), (void*)&remoteDevVolumeChanged, (void**)&remoteDevVolumeChanged_orig);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001A44A0), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
 		return;
 	}
 	if(os_version.majorVersion!=14||os_version.minorVersion!=3||os_version.patchVersion!=0) {
