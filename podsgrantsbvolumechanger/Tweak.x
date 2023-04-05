@@ -86,9 +86,10 @@ static void batterySync_callback(CFMachPortRef port, LMMessage *message, CFIndex
 	}
 	#endif
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
-	if((os_version.majorVersion!=15||os_version.minorVersion!=0||os_version.patchVersion!=0)
+	if((os_version.majorVersion!=15||os_version.minorVersion!=0||(os_version.patchVersion!=0&&os_version.patchVersion!=2))
 		&&(os_version.majorVersion!=14||os_version.minorVersion!=4||os_version.patchVersion!=0)
-		&&(os_version.majorVersion!=14||os_version.minorVersion!=3||os_version.patchVersion!=0)) {
+		&&(os_version.majorVersion!=14||os_version.minorVersion!=3||os_version.patchVersion!=0)
+		&&(os_version.majorVersion!=14||os_version.minorVersion!=1||os_version.patchVersion!=0)) {
 		// Due to the mass use of address-based hooking on bluetoothd, it would surely NOT work at other OS versions.
 		UIAlertView *warningAlert=[[UIAlertView alloc] initWithTitle:@"PodsGrant: ERROR" message:@"You have installed PodsGrant to an OS version that haven't been supported currently! Please uninstall it now as it has nothing to do with your OS!" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
 		[warningAlert show];
