@@ -162,7 +162,7 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 	// iOS 14.4.0 (Thanks @dqdd123)
 	// iOS 15.0.0 (Thanks @bobjenkins603)
 	if(os_version.majorVersion==15&&os_version.minorVersion==0&&(os_version.patchVersion==0||os_version.patchVersion==2)) {
-		product_id_offset=912;
+		product_id_offset=908;
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100337344), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
 		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100334840), (void*)&abilityFunc, (void**)&abilityFuncOrig);
 		//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DC9AC), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
