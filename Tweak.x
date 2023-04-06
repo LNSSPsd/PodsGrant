@@ -205,22 +205,37 @@ struct address_map_entry {
 		//fprintf(log_file, "FOUND ENTRY\n");
 		//fflush(log_file);
 		product_id_offset=map_entry->product_id_offset;
-		#ifdef IS_ROOTLESS
-		// For rootless, 1 is the address of the binary itself
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(1)+map_entry->first_hook_addr), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(1)+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		uint64_t bin_vmaddr_slide=0;
+		#ifndef IS_ROOTLESS
+		bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(0);
 		#else
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->first_hook_addr), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		int image_count=_dyld_image_count();
+		for(int i=0;i<image_count;i++) {
+			const char *img_name=_dyld_get_image_name(i);
+			if(memcmp(img_name, "bluetoothd\0", 11)==0) {
+				bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(i);
+				break;
+			}
+		}
+		if(!bin_vmaddr_slide) {
+			FILE *err_file=fopen("/tmp/bluetoothd.err.log", "a");
+			if(err_file) {
+				fprintf(err_file, "bluetoothd [PodsGrant]: image index for `bluetoothd` not found.\n");
+				fclose(err_file);
+			}
+			abort();
+		}
 		#endif
+		MSHookFunction((void*)(bin_vmaddr_slide+map_entry->first_hook_addr), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+		MSHookFunction((void*)(bin_vmaddr_slide+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
 		#ifndef IS_ROOTLESS
 		if(map_entry->should_send_volume_addr) {
-			MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->should_send_volume_addr), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
+			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->should_send_volume_addr), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
 		}else if(map_entry->change_volume_addr) {
-			MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->change_volume_addr), (void*)&remoteDevVolumeChanged, (void**)&remoteDevVolumeChanged_orig);
+			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->change_volume_addr), (void*)&remoteDevVolumeChanged, (void**)&remoteDevVolumeChanged_orig);
 		}
 		if(map_entry->battery_info_addr) {
-			MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->battery_info_addr), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->battery_info_addr), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
 		}
 		#endif
 		map_entry++;
