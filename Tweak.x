@@ -1,6 +1,8 @@
 //#import <>
+#ifndef IS_ROOTLESS
 #define LIGHTMESSAGING_TIMEOUT 500
 #include <LightMessaging/LightMessaging.h>
+#endif
 #include <stdio.h>
 #include <substrate.h>
 #include <mach-o/dyld.h>
@@ -11,8 +13,10 @@ FILE *log_file;
 
 unsigned int (*orig_1002E1F9C)(void *a1, void *a2, void *a3, void *a4, void *a5);
 unsigned int my_1002E1F9C(void *a1, void *a2, void *a3, void *a4, void *a5) {
-	if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
-		*(unsigned int*)(a1+product_id_offset)=0x200E;
+	//fprintf(log_file, "PRODID: %d\n", *(uint32_t*)(a1+product_id_offset));
+	//fflush(log_file);
+	if(*(uint32_t*)(a1+product_id_offset)==0x2014) {
+		*(uint32_t*)(a1+product_id_offset)=0x200E;
 	}
 	return orig_1002E1F9C(a1,a2,a3,a4,a5);
 }
@@ -46,6 +50,8 @@ void *caseRelatedClassInitHook(void *a1, void *a2, void *a3/* ptr to 128-bit-lon
 
 unsigned int (*abilityFuncOrig)(void *, unsigned int abilityID);
 unsigned int abilityFunc(void *a1, unsigned int abilityID) {
+	//fprintf(log_file, "PRODID: %d\n", *(uint32_t*)(a1+product_id_offset));
+	//fflush(log_file);
 	if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
 		*(unsigned int*)(a1+product_id_offset)=0x200E;
 	}
@@ -54,6 +60,8 @@ unsigned int abilityFunc(void *a1, unsigned int abilityID) {
 	}
 	return abilityFuncOrig(a1, abilityID);
 }
+
+#ifndef IS_ROOTLESS
 
 LMConnection vol_change_connection = {
 	MACH_PORT_NULL,
@@ -136,7 +144,24 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 	return orig_batteryInfoArrivedFunc(a1,a2);
 }
 
+#endif
+
+struct address_map_entry {
+	unsigned char version_major;
+	unsigned char version_minor;
+	unsigned char version_patch;
+	unsigned int product_id_offset;
+	uint64_t first_hook_addr;
+	uint64_t ability_func_addr;
+	uint64_t should_send_volume_addr;
+	uint64_t battery_info_addr;
+	uint64_t change_volume_addr;
+};
+
 %ctor {
+	//log_file=fopen("/tmp/bluetoothd.txt", "a");
+	//fprintf(log_file, "PREP, MYPID %d\n", getpid());
+	//fflush(log_file);
 	#ifndef __arm64e__
 	// Not an arm64e device
 	// For arm64e devices, system binaries are arm64e too, while user applications are still arm64
@@ -144,65 +169,63 @@ void *batteryInfoArrivedFunc(void *a1, void *a2) {
 	// So that this would not share the same support list w/ arm64e devices.
 	// Currently supported ARM64 (NON-ARM64E) versions:
 	// iOS 14.8.0 (Thanks @rastafaa)
-	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
-	if(os_version.majorVersion==14&&os_version.minorVersion==8&&os_version.patchVersion==0) {
-		//product_id_offset=844
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DD678), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DADDC), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x10028E014), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001A09C4), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
-		return;
-	}
-	return;
-	#endif
-	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
+	const struct address_map_entry address_map[] = {
+		{14,8,0,844,0x1002DD678,0x1002DADDC,0x10028E014,0x1001A09C4,0},
+		{0,0,0}
+	};
+	#else
+	// Not quite sure if all the patches share the same bluetoothd
 	// Currently supported versions:
 	// iOS 14.1.0 (Thanks @babyf2sh)
 	// iOS 14.3.0
 	// iOS 14.4.0 (Thanks @dqdd123)
+	// iOS 14.6.0 (Thanks [Jim Geranios])
 	// iOS 15.0.0 (Thanks @bobjenkins603)
-	if(os_version.majorVersion==15&&os_version.minorVersion==0&&(os_version.patchVersion==0||os_version.patchVersion==2)) {
-		product_id_offset=908;
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100337344), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100334840), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-		//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DC9AC), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
-		//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001C8DA8), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
-		return;
-	}else if(os_version.majorVersion==14&&os_version.minorVersion==4&&os_version.patchVersion==0) {
-		//product_id_offset=844
-		// structure unchanged between iOS 14.3 & iOS 14.4
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002E54E4), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002E2B78), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100292FA8), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001AE588), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
-		return;
-	}else if(os_version.majorVersion==14&&os_version.minorVersion==1&&os_version.patchVersion==0) {
-		//product_id_offset=844
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002D65B0), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002D3CB4), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-		// MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002859EC), (void*)&remoteDevVolumeChanged, (void**)&remoteDevVolumeChanged_orig);
-		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001A44A0), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
-		return;
-	}
-	if(os_version.majorVersion!=14||os_version.minorVersion!=3||os_version.patchVersion!=0) {
-		// Due to the mass use of address-based hooking (see below), it would surely NOT work at other OS versions.
-		return;
-	}
-	//log_file=fopen("/tmp/bluetoothd_log", "a");
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002E1F9C), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-	//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DF630), (void *)&my_1002DF630, (void**)&orig_1002DF630);
+	// iOS 15.0.2 (Same addresses with 15.0.0)
+	const struct address_map_entry address_map[] = {
+		{15,3,1,908,0x1003362C8,0x1003337B8,0,0,0},
+		{15,0,2,908,0x100337344,0x100334840,0,0,0},
+		{15,0,0,908,0x100337344,0x100334840,0,0,0},
+		{14,6,0,844,0x1002FD884,0x1002FAECC,0x1002AB50C,0x1001B37E4,0},
+		{14,4,0,844,0x1002E54E4,0x1002E2B78,0x100292FA8,0x1001AE588,0},
+		{14,3,0,844,0x1002E1F9C,0x1002DF630,0x100290714,0x1001ABD64,0},
+		{14,2,1,844,0x1002E349C,0x1002E0B80,0x100291D20,0x1001AD7D0,0},
+		{14,1,0,844,0x1002D65B0,0x1002D3CB4,0,0x1001A44A0,0x1002859EC},
+		{0,0,0}
+	};
+	#endif
+	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
 	
-	/*MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100539B04), (void*)&os_log_type_enabled_hook, (void**)NULL);
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100538D64), (void*)&os_log_impl_hook, (void**)NULL); // 
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100538D54), (void*)&os_log_impl_hook, (void**)NULL); // fault
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100538D44), (void*)&os_log_impl_hook, (void**)NULL); // error
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100538D34), (void*)&os_log_impl_hook, (void**)NULL); // debug
-	*/
-	//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001B1ED0), (void*)&caseInfo, (void**)&caseInfo_orig);
-	//MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001BA1D8), (void*)&caseRelatedClassInitHook, (void**)&caseRelatedClassInit);
-
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1002DF630), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x100290714), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
-	MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+0x1001ABD64), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+	const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
+	while(map_entry->version_major!=0) {
+		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&os_version.patchVersion==map_entry->version_patch)) {
+			map_entry++;
+			continue;
+		}
+		fprintf(log_file, "FOUND ENTRY\n");
+		fflush(log_file);
+		product_id_offset=map_entry->product_id_offset;
+		#ifdef IS_ROOTLESS
+		// For rootless, 1 is the address of the binary itself
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(1)+map_entry->first_hook_addr), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(1)+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		#else
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->first_hook_addr), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+		MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
+		#endif
+		#ifndef IS_ROOTLESS
+		if(map_entry->should_send_volume_addr) {
+			MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->should_send_volume_addr), (void*)&shouldSendVolume, (void**)&origShouldSendVolume);
+		}else if(map_entry->change_volume_addr) {
+			MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->change_volume_addr), (void*)&remoteDevVolumeChanged, (void**)&remoteDevVolumeChanged_orig);
+		}
+		if(map_entry->battery_info_addr) {
+			MSHookFunction((void*)(_dyld_get_image_vmaddr_slide(0)+map_entry->battery_info_addr), (void*)&batteryInfoArrivedFunc, (void**)&orig_batteryInfoArrivedFunc);
+		}
+		#endif
+		map_entry++;
+		break;
+	}
+	//fprintf(log_file, "INIT OK\n");
+	//fflush(log_file);
 }

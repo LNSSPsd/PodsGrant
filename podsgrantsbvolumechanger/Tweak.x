@@ -74,22 +74,44 @@ static void batterySync_callback(CFMachPortRef port, LMMessage *message, CFIndex
 	LMResponseBufferFree((LMResponseBuffer *)message);
 }
 
+struct address_map_entry {
+	unsigned char version_major;
+	unsigned char version_minor;
+	unsigned char version_patch;
+};
+
 %hook SpringBoard
 
 - (void)applicationDidFinishLaunching:(id)app {
 	%orig;
 	#ifndef __arm64e__
-	if((os_version.majorVersion!=14||os_version.minorVersion!=8||os_version.patchVersion!=0) {
-		UIAlertView *warningAlert=[[UIAlertView alloc] initWithTitle:@"PodsGrant: ERROR" message:@"You have installed PodsGrant to an OS version that haven't been supported currently! Please uninstall it now as it has nothing to do with your OS!" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
-		[warningAlert show];
-		return;
-	}
+	const struct address_map_entry address_map[] = {
+		{14,8,0},
+		{0,0,0}
+	};
+	#else
+	const struct address_map_entry address_map[] = {
+		{15,0,2},
+		{15,0,0},
+		{14,6,0},
+		{14,4,0},
+		{14,3,0},
+		{14,2,1},
+		{14,1,0},
+		{0,0,0}
+	};
 	#endif
+	const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
-	if((os_version.majorVersion!=15||os_version.minorVersion!=0||(os_version.patchVersion!=0&&os_version.patchVersion!=2))
-		&&(os_version.majorVersion!=14||os_version.minorVersion!=4||os_version.patchVersion!=0)
-		&&(os_version.majorVersion!=14||os_version.minorVersion!=3||os_version.patchVersion!=0)
-		&&(os_version.majorVersion!=14||os_version.minorVersion!=1||os_version.patchVersion!=0)) {
+	BOOL version_check_ok=FALSE;
+	while(map_entry->version_major!=0) {
+		if(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&os_version.patchVersion==map_entry->version_patch) {
+			version_check_ok=1;
+			break;
+		}
+		map_entry++;
+	}
+	if(!version_check_ok) {
 		// Due to the mass use of address-based hooking on bluetoothd, it would surely NOT work at other OS versions.
 		UIAlertView *warningAlert=[[UIAlertView alloc] initWithTitle:@"PodsGrant: ERROR" message:@"You have installed PodsGrant to an OS version that haven't been supported currently! Please uninstall it now as it has nothing to do with your OS!" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
 		[warningAlert show];
