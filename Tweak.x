@@ -202,8 +202,8 @@ struct address_map_entry {
 			map_entry++;
 			continue;
 		}
-		fprintf(log_file, "FOUND ENTRY\n");
-		fflush(log_file);
+		//fprintf(log_file, "FOUND ENTRY\n");
+		//fflush(log_file);
 		product_id_offset=map_entry->product_id_offset;
 		#ifdef IS_ROOTLESS
 		// For rootless, 1 is the address of the binary itself
