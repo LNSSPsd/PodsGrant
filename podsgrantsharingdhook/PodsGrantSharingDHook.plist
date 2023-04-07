@@ -1,1 +1,1 @@
-{ Filter = { Executables = ( "sharingd" ); Bundles = ( "com.apple.SharingViewService" ); }; }
+{ Filter = { Bundles = ( "com.apple.Sharing" ); }; }
