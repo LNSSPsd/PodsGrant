@@ -1,1 +1,1 @@
-{ Filter = { Executables = ( "bluetoothd" ); }; }
+{ Filter = { Executables = ( "bluetoothd" ); Bundles = ( "com.apple.Sharing" ); }; }

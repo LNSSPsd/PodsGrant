@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <substrate.h>
 #include <mach-o/dyld.h>
+#include <Foundation/Foundation.h>
 
 static int product_id_offset;
 FILE *log_file;

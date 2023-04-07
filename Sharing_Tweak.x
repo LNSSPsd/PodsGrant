@@ -1,4 +1,7 @@
 #import <Foundation/Foundation.h>
+#include <mach-o/dyld.h>
+
+%group sharing_hook_grp
 
 %hook SFBLEScanner
 
@@ -15,3 +18,14 @@
 }
 
 %end
+
+%end
+
+%ctor {
+	char exec_path[512];
+	uint32_t len;
+	_NSGetExecutablePath(exec_path, &len);
+	if(memcmp(exec_path, "/usr/sbin/bluetoothd", 21)!=0) {
+		%init(sharing_hook_grp);
+	}
+}
