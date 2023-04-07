@@ -47,6 +47,14 @@ struct address_map_entry {
 };
 
 %ctor {
+	{
+		char exec_path[512];
+		uint32_t len;
+		_NSGetExecutablePath(exec_path, &len);
+		if(memcmp(exec_path, "/usr/sbin/bluetoothd", 21)!=0) {
+			return;
+		}
+	}
 	//log_file=fopen("/tmp/bluetoothd.txt", "a");
 	//fprintf(log_file, "PREP, MYPID %d vmslide addr %p\n", getpid(), (void*)_dyld_get_image_vmaddr_slide(0));
 	//fflush(log_file);
