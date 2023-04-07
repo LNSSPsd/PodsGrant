@@ -212,7 +212,7 @@ struct address_map_entry {
 		int image_count=_dyld_image_count();
 		for(int i=0;i<image_count;i++) {
 			const char *img_name=_dyld_get_image_name(i);
-			if(memcmp(img_name, "bluetoothd\0", 11)==0) {
+			if(memcmp(img_name, "/usr/sbin/bluetoothd\0", 21)==0) {
 				bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(i);
 				break;
 			}
