@@ -13,10 +13,10 @@ PodsGrant_CFLAGS = -fobjc-arc
 include $(THEOS_MAKE_PATH)/tweak.mk
 ifneq ($(THEOS_PACKAGE_SCHEME),rootless)
 	SUBPROJECTS += podsgrantsbvolumechanger
-	SUBPROJECTS += podsgrantsharingdhook
 	PodsGrant_LIBRARIES = rocketbootstrap
 else
 	PodsGrant_LIBRARIES = 
 	PodsGrant_CFLAGS = -fobjc-arc -DIS_ROOTLESS=1
 endif
+SUBPROJECTS += podsgrantsharingdhook
 include $(THEOS_MAKE_PATH)/aggregate.mk
