@@ -1,8 +1,8 @@
 Package: com.lns.pogr
 Name: PodsGrant
-Version: 0.1.0
+Version: 0.2.0
 Architecture: iphoneos-arm
-Description: Treat AirPods Pro 2 more correctly
+Description: Treat AirPods Pro 2 correctly
 Maintainer: Ruphane
 Author: Ruphane
 Section: Tweaks

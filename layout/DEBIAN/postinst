@@ -1,0 +1,4 @@
+#!/bin/sh
+
+killall -TERM bluetoothd
+killall -TERM sharingd

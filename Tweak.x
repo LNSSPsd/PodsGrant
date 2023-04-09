@@ -31,9 +31,9 @@ unsigned int abilityFunc(void *a1, unsigned int abilityID) {
 	return abilityFuncOrig(a1, abilityID);
 }
 
-void *(*supportRemoteVolumeChangeOriginal)(void*,BOOL);
-void *supportRemoteVolumeChange(void *a1, BOOL support) {
-	return supportRemoteVolumeChangeOriginal(a1, YES);
+void *(*supportRemoteVolumeChangeOriginal)(void*,uint32_t);
+void *supportRemoteVolumeChange(void *a1, uint32_t support) {
+	return supportRemoteVolumeChangeOriginal(a1, 1);
 }
 
 struct address_map_entry {
@@ -73,19 +73,31 @@ struct address_map_entry {
 	// Not quite sure if all the patches share the same bluetoothd
 	// Currently supported versions:
 	// iOS 14.1.0 (Thanks @babyf2sh)
+	// iOS 14.2.0 (Same w/ iOS 14.2.1)
+	// iOS 14.2.1 (Thanks @babyf2sh)
 	// iOS 14.3.0
 	// iOS 14.4.0 (Thanks @dqdd123)
 	// iOS 14.6.0 (Thanks [Jim Geranios])
 	// iOS 15.0.0 (Thanks @bobjenkins603)
+	// iOS 15.0.1 (Same addresses with 15.0.0)
 	// iOS 15.0.2 (Same addresses with 15.0.0)
+	// iOS 15.1.0 (Same w/ iOS 15.1.1)
+	// iOS 15.1.1 (Thanks @babyf2sh)
+	// iOS 15.3.1
+	// iOS 15.4.1 (Thanks @babyf2sh)
 	const struct address_map_entry address_map[] = {
-		{15,3,1,908,0x1003362C8,0x1003337B8,0}, // Natively supported software volume changing
+		{15,4,1,924,0x100348DB4,0x1003462E0,0},
+		{15,3,1,908,0x1003362C8,0x1003337B8,0}, // Software volume changing is natively supported
+		{15,1,1,908,0x10033E7EC,0x10033BCE8,0x100207638},
+		{15,1,0,908,0x10033E7EC,0x10033BCE8,0x100207638},
 		{15,0,2,908,0x100337344,0x100334840,0x1002026E0},
+		{15,0,1,908,0x100337344,0x100334840,0x1002026E0},
 		{15,0,0,908,0x100337344,0x100334840,0x1002026E0},
 		{14,6,0,844,0x1002FD884,0x1002FAECC,0x1001E65FC},
 		{14,4,0,844,0x1002E54E4,0x1002E2B78,0x1001E0770},
 		{14,3,0,844,0x1002E1F9C,0x1002DF630,0x1001DDF4C},
 		{14,2,1,844,0x1002E349C,0x1002E0B80,0x1001DF9B8},
+		{14,2,0,844,0x1002E349C,0x1002E0B80,0x1001DF9B8},
 		{14,1,0,844,0x1002D65B0,0x1002D3CB4,0x1001D5DCC},
 		{0,0,0}
 	};
