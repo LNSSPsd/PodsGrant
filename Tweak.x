@@ -84,7 +84,10 @@ struct address_map_entry {
 	// iOS 14.2 (Thanks @babyf2sh)
 	// iOS 14.3
 	// iOS 14.4 (Thanks @dqdd123)
+	// iOS 14.5 (Thanks @Symplicityy)
 	// iOS 14.6 (Thanks [Jim Geranios])
+	// iOS 14.7 (Thanks @Symplicityy)
+	// iOS 14.8 (Thanks @ElDutchy & @Symplicityy)
 	// iOS 15.0 (Thanks @bobjenkins603)
 	// iOS 15.1 (Thanks @babyf2sh)
 	// iOS 15.3
@@ -94,7 +97,10 @@ struct address_map_entry {
 		{15,3,908,0x1003362C8,0x1003337B8,0}, // Software volume changing is natively supported
 		{15,1,908,0x10033E7EC,0x10033BCE8,0x100207638},
 		{15,0,908,0x100337344,0x100334840,0x1002026E0},
+		{14,8,844,0x1002FCBD8,0x1002FA214,0x1001E5684},
+		{14,7,844,0x1002FD14C,0x1002FA788,0x1001E5C3C},
 		{14,6,844,0x1002FD884,0x1002FAECC,0x1001E65FC},
+		{14,5,844,0x1002FC7CC,0x1002F9E5C,0x1001E3A58},
 		{14,4,844,0x1002E54E4,0x1002E2B78,0x1001E0770},
 		{14,3,844,0x1002E1F9C,0x1002DF630,0x1001DDF4C},
 		{14,2,844,0x1002E349C,0x1002E0B80,0x1001DF9B8},
