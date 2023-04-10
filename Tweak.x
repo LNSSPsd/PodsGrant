@@ -36,14 +36,19 @@ void *supportRemoteVolumeChange(void *a1, uint32_t support) {
 	return supportRemoteVolumeChangeOriginal(a1, 1);
 }
 
+void *(*supportSoftwareVolumeOriginal)(void*,uint32_t);
+void *supportSoftwareVolume(void *a1, uint32_t support) {
+	return supportSoftwareVolumeOriginal(a1, 1);
+}
+
 struct address_map_entry {
 	unsigned char version_major;
 	unsigned char version_minor;
-	unsigned char version_patch;
 	unsigned int product_id_offset;
 	uint64_t first_hook_addr;
 	uint64_t ability_func_addr;
 	uint64_t support_remote_volume_change_addr;
+	uint64_t support_software_volume_addr;
 };
 
 %ctor {
@@ -64,48 +69,42 @@ struct address_map_entry {
 	// Those addresses wouldn't work for non-arm64e devices.
 	// So that this would not share the same support list w/ arm64e devices.
 	// Currently supported ARM64 (NON-ARM64E) versions:
-	// iOS 14.8.0 (Thanks @rastafaa)
+	// iOS 14.8 (Thanks @rastafaa)
 	const struct address_map_entry address_map[] = {
-		{14,8,0,844,0x1002DD678,0x1002DADDC,0x1001D0EB8},
-		{0,0,0}
+		{14,8,844,0x1002DD678,0x1002DADDC,0x1001D0EB8,0x1001D143C},
+		{0,0}
 	};
 	#else
 	// Not quite sure if all the patches share the same bluetoothd
 	// Currently supported versions:
-	// iOS 14.1.0 (Thanks @babyf2sh)
-	// iOS 14.2.0 (Same w/ iOS 14.2.1)
-	// iOS 14.2.1 (Thanks @babyf2sh)
-	// iOS 14.3.0
-	// iOS 14.4.0 (Thanks @dqdd123)
-	// iOS 14.6.0 (Thanks [Jim Geranios])
-	// iOS 15.0.0 (Thanks @bobjenkins603)
-	// iOS 15.0.1 (Same addresses with 15.0.0)
-	// iOS 15.0.2 (Same addresses with 15.0.0)
-	// iOS 15.1.0 (Same w/ iOS 15.1.1)
-	// iOS 15.1.1 (Thanks @babyf2sh)
-	// iOS 15.3.1
-	// iOS 15.4.1 (Thanks @babyf2sh)
+	// iOS 14.0 (Thanks @Symplicityy)
+	// iOS 14.1 (Thanks @babyf2sh)
+	// iOS 14.2 (Thanks @babyf2sh)
+	// iOS 14.3
+	// iOS 14.4 (Thanks @dqdd123)
+	// iOS 14.6 (Thanks [Jim Geranios])
+	// iOS 15.0 (Thanks @bobjenkins603)
+	// iOS 15.1 (Thanks @babyf2sh)
+	// iOS 15.3
+	// iOS 15.4 (Thanks @babyf2sh)
 	const struct address_map_entry address_map[] = {
-		{15,4,1,924,0x100348DB4,0x1003462E0,0},
-		{15,3,1,908,0x1003362C8,0x1003337B8,0}, // Software volume changing is natively supported
-		{15,1,1,908,0x10033E7EC,0x10033BCE8,0x100207638},
-		{15,1,0,908,0x10033E7EC,0x10033BCE8,0x100207638},
-		{15,0,2,908,0x100337344,0x100334840,0x1002026E0},
-		{15,0,1,908,0x100337344,0x100334840,0x1002026E0},
-		{15,0,0,908,0x100337344,0x100334840,0x1002026E0},
-		{14,6,0,844,0x1002FD884,0x1002FAECC,0x1001E65FC},
-		{14,4,0,844,0x1002E54E4,0x1002E2B78,0x1001E0770},
-		{14,3,0,844,0x1002E1F9C,0x1002DF630,0x1001DDF4C},
-		{14,2,1,844,0x1002E349C,0x1002E0B80,0x1001DF9B8},
-		{14,2,0,844,0x1002E349C,0x1002E0B80,0x1001DF9B8},
-		{14,1,0,844,0x1002D65B0,0x1002D3CB4,0x1001D5DCC},
-		{0,0,0}
+		{15,4,924,0x100348DB4,0x1003462E0,0,0},
+		{15,3,908,0x1003362C8,0x1003337B8,0,0}, // Software volume changing is natively supported
+		{15,1,908,0x10033E7EC,0x10033BCE8,0x100207638,0x100207E18},
+		{15,0,908,0x100337344,0x100334840,0x1002026E0,0x100202E5C},
+		{14,6,844,0x1002FD884,0x1002FAECC,0x1001E65FC,0x1001E6BAC},
+		{14,4,844,0x1002E54E4,0x1002E2B78,0x1001E0770,0x1001E0D20},
+		{14,3,844,0x1002E1F9C,0x1002DF630,0x1001DDF4C,0x1001DE4FC},
+		{14,2,844,0x1002E349C,0x1002E0B80,0x1001DF9B8,0x1001DFF68},
+		{14,1,844,0x1002D65B0,0x1002D3CB4,0x1001D5DCC,0x1001D6304},
+		{14,0,844,0x1002D6A0C,0x1002D4110,0x1001D6448,0x1001D6980},
+		{0,0}
 	};
 	#endif
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
 	const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
 	while(map_entry->version_major!=0) {
-		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&os_version.patchVersion==map_entry->version_patch)) {
+		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor)) {
 			map_entry++;
 			continue;
 		}
@@ -137,6 +136,9 @@ struct address_map_entry {
 		MSHookFunction((void*)(bin_vmaddr_slide+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
 		if(map_entry->support_remote_volume_change_addr) {
 			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->support_remote_volume_change_addr), (void*)&supportRemoteVolumeChange, (void**)&supportRemoteVolumeChangeOriginal);
+		}
+		if(map_entry->support_software_volume_addr) {
+			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->support_software_volume_addr), (void*)&supportSoftwareVolume, (void**)&supportSoftwareVolumeOriginal);
 		}
 		map_entry++;
 		break;
