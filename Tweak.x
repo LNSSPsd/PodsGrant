@@ -73,8 +73,10 @@ struct address_map_entry {
 	// So that this would not share the same support list w/ arm64e devices.
 	// Currently supported ARM64 (NON-ARM64E) versions:
 	// iOS 14.8 (Thanks @rastafaa)
+	// iOS 14.3 (Thanks @tokfrans03)
 	const struct address_map_entry address_map[] = {
 		{14,8,844,0x1002DD678,0x1002DADDC,0x1001D0EB8},
+		{14,3,844,0x1002C8B38,0x1002C62E0,0x1001CE730},
 		{0,0}
 	};
 	#else
