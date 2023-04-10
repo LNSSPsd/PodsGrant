@@ -22,8 +22,8 @@
 %end
 
 %ctor {
-	char exec_path[512];
-	uint32_t len;
+	char exec_path[512]={0};
+	uint32_t len=512;
 	_NSGetExecutablePath(exec_path, &len);
 	if(memcmp(exec_path, "/usr/sbin/bluetoothd", 21)!=0) {
 		%init(sharing_hook_grp);
