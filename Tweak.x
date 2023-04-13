@@ -12,6 +12,8 @@ unsigned int my_1002E1F9C(void *a1, void *a2, void *a3, void *a4, void *a5) {
 	//fflush(log_file);
 	if(*(uint32_t*)(a1+product_id_offset)==0x2014) {
 		*(uint32_t*)(a1+product_id_offset)=0x200E;
+	}else if(*(uint32_t*)(a1+product_id_offset)==8211) { // b688 = AirPods 3rd Gen.
+		*(uint32_t*)(a1+product_id_offset)=8207; // AirPods 2nd Gen.
 	}
 	return orig_1002E1F9C(a1,a2,a3,a4,a5);
 }
@@ -22,6 +24,8 @@ unsigned int abilityFunc(void *a1, unsigned int abilityID) {
 	//fflush(log_file);
 	if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
 		*(unsigned int*)(a1+product_id_offset)=0x200E;
+	}else if(*(uint32_t*)(a1+product_id_offset)==8211) { // b688 = AirPods 3rd Gen.
+		*(uint32_t*)(a1+product_id_offset)=8207; // AirPods 2nd Gen.
 	}
 	if(*(unsigned int*)(a1+product_id_offset)==0x200E) {
 		if(abilityID==12||abilityID==26) {
