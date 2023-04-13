@@ -81,6 +81,7 @@ struct address_map_entry {
 	const struct address_map_entry address_map[] = {
 		{14,8,844,0x1002DD678,0x1002DADDC,0x1001D0EB8},
 		{14,3,844,0x1002C8B38,0x1002C62E0,0x1001CE730},
+		{13,3,684,0x1002593B0,0x100255414,0x10018FBD0},
 		{0,0}
 	};
 	#else
@@ -112,7 +113,6 @@ struct address_map_entry {
 		{14,2,844,0x1002E349C,0x1002E0B80,0x1001DF9B8},
 		{14,1,844,0x1002D65B0,0x1002D3CB4,0x1001D5DCC},
 		{14,0,844,0x1002D6A0C,0x1002D4110,0x1001D6448},
-		{13,3,684,0x1002593B0,0x100255414,0x10018FBD0},
 		{0,0}
 	};
 	#endif
