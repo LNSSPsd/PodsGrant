@@ -2,3 +2,4 @@
 
 killall -TERM bluetoothd
 killall -TERM sharingd
+killall -TERM SharingViewService
