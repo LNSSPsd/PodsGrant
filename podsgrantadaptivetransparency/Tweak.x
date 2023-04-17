@@ -64,6 +64,18 @@
 
 %end
 
+// How this work:
+// Preferences.app - [PASettings setAdaptiveTransparencyEnabled...] (What we added)
+//    |
+// Preferences.app - [PASettings setTransparencyCustomized...]
+//    |
+// (Inter-process communication stuff, idk, consider it as magic.)
+//    |
+// heard - [PAAccessoryManager sendUpdateToAccessory] (to track transparencyCustomized)
+// ^ It holds the CBPeripheral of the earbuds
+//    |
+// <Hook: get adaptiveTransparencyEnabledForAddress and send bluetooth command>
+
 %hook PASettings
 
 %new
