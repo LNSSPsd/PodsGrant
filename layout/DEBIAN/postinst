@@ -1,4 +1,6 @@
 #!/bin/sh
 
-killall -TERM bluetoothd
-killall -TERM sharingd
+killall -TERM bluetoothd || true
+killall -TERM sharingd || true
+killall -TERM heard ||true
+killall -TERM SharingViewService || true
