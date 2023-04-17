@@ -5,6 +5,25 @@
 
 %hook SFBLEScanner
 
+- (id)pairingParsePayload:(NSData *)payload identifier:(id)idf bleDevice:(id)bleDev peerInfo:(id)peerInfo {
+	if(*(uint16_t*)(payload.bytes+5)==0x2014) {
+		char *newPayload=malloc(payload.length);
+		memcpy(newPayload, payload.bytes, payload.length);
+		*(uint16_t*)(newPayload+5)=0x200E;
+		id ret=%orig([NSData dataWithBytes:newPayload length:payload.length], idf, bleDev, peerInfo);
+		free(newPayload);
+		return ret;
+	}else if(*(uint16_t*)(payload.bytes+5)==8211) {
+		char *newPayload=malloc(payload.length);
+		memcpy(newPayload, payload.bytes, payload.length);
+		*(uint16_t*)(newPayload+5)=8207;
+		id ret=%orig([NSData dataWithBytes:newPayload length:payload.length], idf, bleDev, peerInfo);
+		free(newPayload);
+		return ret;
+	}
+	return %orig;
+}
+
 - (id)pairingParsePayload:(NSData *)payload identifier:(id)idf bleDevice:(id)bleDev {
 	if(*(uint16_t*)(payload.bytes+5)==0x2014) {
 		char *newPayload=malloc(payload.length);
