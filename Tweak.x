@@ -106,6 +106,7 @@ struct address_map_entry {
 	const struct address_map_entry address_map[] = {
 		{15,4,924,0x100348DB4,0x1003462E0,0},
 		{15,3,908,0x1003362C8,0x1003337B8,0}, // Software volume changing is natively supported
+		{15,2,908,0x1003370A8,0x100334598,0x1001FD950,0},
 		{15,1,908,0x10033E7EC,0x10033BCE8,0x100207638,0},
 		{15,0,908,0x100337344,0x100334840,0x1002026E0,0},
 		{14,8,844,0x1002FCBD8,0x1002FA214,0x1001E5684,0},
