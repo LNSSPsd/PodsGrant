@@ -27,7 +27,7 @@
 %hook PAAccessoryManager
 
 - (void)sendUpdateToAccessory {
-	FILE *logFile=fopen("/tmp/trlog.txt","a");
+	//FILE *logFile=fopen("/tmp/trlog.txt","a");
 	PASettings *paSettings=[PASettings sharedInstance];
 	NSDictionary *uta=[self uuidToAddress];
 	for(CBPeripheral *peripheral in [self peripherals]) {
@@ -37,7 +37,7 @@
 		if(!addr)
 			continue;
 		BOOL atEnabled=[paSettings adaptiveTransparencyEnabledForAddress:addr];
-		fprintf(logFile, "Adaptive Transparency Enabled: %d for address: %s\n", atEnabled, [addr UTF8String]);
+		//fprintf(logFile, "Adaptive Transparency Enabled: %d for address: %s\n", atEnabled, [addr UTF8String]);
 		// a48fec08-3921-43db-82aa-afbce8ebb4fb
 		CBUUID *adaptiveTransparencyUUID=[CBUUID UUIDWithString:[NSString stringWithUTF8String:"a48fec08-3921-43db-82aa-afbce8ebb4fb"]];
 		//CBUUID *caseSilentModeUUID=[CBUUID UUIDWithString:[NSString stringWithUTF8String:"71060001-413A-41EA-AF86-8CECFA21D057"]];
@@ -45,20 +45,20 @@
 		for(CBService *service in [peripheral services]) {
 			for(CBCharacteristic *characteristic in [service characteristics]) {
 				if([[characteristic UUID] isEqual:adaptiveTransparencyUUID]) {
-					fprintf(logFile, "WROTE TRANSPARENCY\n");
+					//fprintf(logFile, "WROTE TRANSPARENCY\n");
 					[peripheral writeValue:[NSData dataWithBytes:&atEnabled length:1] forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
 					succ=YES;
 					break;
 				}
-				fprintf(logFile, "Continue at UUID %s\n", [[[characteristic UUID] UUIDString] UTF8String]);
+				//fprintf(logFile, "Continue at UUID %s\n", [[[characteristic UUID] UUIDString] UTF8String]);
 			}
 		}
 		if(!succ) {
 			[paSettings _setAdaptiveTransparencyEnabled:NO forAddress:addr];
-			fprintf(logFile, "Failed setting for address: %s\n", [addr UTF8String]);
+			//fprintf(logFile, "Failed setting for address: %s\n", [addr UTF8String]);
 		}
 	}
-	fclose(logFile);
+	//fclose(logFile);
 	return %orig;
 }
 
