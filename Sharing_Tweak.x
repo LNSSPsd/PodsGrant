@@ -20,6 +20,13 @@
 		id ret=%orig([NSData dataWithBytes:newPayload length:payload.length], idf, bleDev, peerInfo);
 		free(newPayload);
 		return ret;
+	}else if(*(uint16_t*)(payload.bytes+5)==8215) {
+		char *newPayload=malloc(payload.length);
+		memcpy(newPayload, payload.bytes, payload.length);
+		*(uint16_t*)(newPayload+5)=8201;
+		id ret=%orig([NSData dataWithBytes:newPayload length:payload.length], idf, bleDev, peerInfo);
+		free(newPayload);
+		return ret;
 	}
 	return %orig;
 }
@@ -36,6 +43,13 @@
 		char *newPayload=malloc(payload.length);
 		memcpy(newPayload, payload.bytes, payload.length);
 		*(uint16_t*)(newPayload+5)=8207;
+		id ret=%orig([NSData dataWithBytes:newPayload length:payload.length], idf, bleDev);
+		free(newPayload);
+		return ret;
+	}else if(*(uint16_t*)(payload.bytes+5)==8215) {
+		char *newPayload=malloc(payload.length);
+		memcpy(newPayload, payload.bytes, payload.length);
+		*(uint16_t*)(newPayload+5)=8201;
 		id ret=%orig([NSData dataWithBytes:newPayload length:payload.length], idf, bleDev);
 		free(newPayload);
 		return ret;
