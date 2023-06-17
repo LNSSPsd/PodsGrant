@@ -2,20 +2,26 @@
 #include <substrate.h>
 #include <mach-o/dyld.h>
 #include <Foundation/Foundation.h>
+#include "general.h"
 
 static int product_id_offset;
-FILE *log_file;
+//static FILE *log_file;
+static struct podsgrant_settings *settings;
 
 unsigned int (*orig_1002E1F9C)(void *a1, void *a2, void *a3, void *a4, void *a5);
 unsigned int my_1002E1F9C(void *a1, void *a2, void *a3, void *a4, void *a5) {
 	//fprintf(log_file, "PRODID: %d\n", *(uint32_t*)(a1+product_id_offset));
 	//fflush(log_file);
-	if(*(uint32_t*)(a1+product_id_offset)==0x2014) {
+	/*if(*(uint32_t*)(a1+product_id_offset)==0x2014) {
 		*(uint32_t*)(a1+product_id_offset)=0x200E;
 	}else if(*(uint32_t*)(a1+product_id_offset)==8211) { // b688 = AirPods 3rd Gen.
 		*(uint32_t*)(a1+product_id_offset)=8207; // AirPods 2nd Gen.
 	}else if(*(uint32_t*)(a1+product_id_offset)==8214) {
 		*(uint32_t*)(a1+product_id_offset)=8209; // Beats Studio Buds
+	}*/
+	uint16_t patched=PGS_patchProductId(settings, *(uint32_t*)(a1+product_id_offset));
+	if(patched) {
+		*(uint32_t*)(a1+product_id_offset)=(uint32_t)patched;
 	}
 	//fprintf(log_file, "PRODID afterpatch: %d\n", *(uint32_t*)(a1+product_id_offset));
 	//fflush(log_file);
@@ -26,12 +32,16 @@ unsigned int (*abilityFuncOrig)(void *, unsigned int abilityID);
 unsigned int abilityFunc(void *a1, unsigned int abilityID) {
 	//fprintf(log_file, "PRODID: %d\n", *(uint32_t*)(a1+product_id_offset));
 	//fflush(log_file);
-	if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
+	/*if(*(unsigned int*)(a1+product_id_offset)==0x2014) {
 		*(unsigned int*)(a1+product_id_offset)=0x200E;
 	}else if(*(uint32_t*)(a1+product_id_offset)==8211) { // b688 = AirPods 3rd Gen.
 		*(uint32_t*)(a1+product_id_offset)=8207; // AirPods 2nd Gen.
 	}else if(*(uint32_t*)(a1+product_id_offset)==8214) {
 		*(uint32_t*)(a1+product_id_offset)=8209;
+	}*/
+	uint16_t patched=PGS_patchProductId(settings, *(uint32_t*)(a1+product_id_offset));
+	if(patched) {
+		*(uint32_t*)(a1+product_id_offset)=(uint32_t)patched;
 	}
 	//fprintf(log_file, "PRODID afterpatch: %d\n", *(uint32_t*)(a1+product_id_offset));
 	//fflush(log_file);
@@ -57,7 +67,7 @@ void *supportSoftwareVolume(void *a1, BOOL support) {
 	return supportSoftwareVolumeOriginal(a1, 1);
 }
 
-struct address_map_entry {
+/*struct address_map_entry {
 	unsigned char version_major;
 	unsigned char version_minor;
 	unsigned int product_id_offset;
@@ -65,8 +75,14 @@ struct address_map_entry {
 	uint64_t ability_func_addr;
 	uint64_t support_remote_volume_change_addr;
 	//uint64_t support_software_volume_addr;
-	// ^ Seems that this ruins things further so no hooking that
-};
+	// ^ Seems that this ruins things furtheraway so no hooking on that
+};*/
+
+%dtor {
+	if(settings) {
+		PGS_freeSettings(settings);
+	}
+}
 
 %ctor {
 	{
@@ -76,6 +92,12 @@ struct address_map_entry {
 		if(memcmp(exec_path, "/usr/sbin/bluetoothd", 21)!=0) {
 			return;
 		}
+	}
+	settings=PGS_readSettings(0);
+	if(!settings->is_tweak_enabled) {
+		PGS_freeSettings(settings);
+		settings=NULL;
+		return;
 	}
 	//log_file=fopen("/tmp/bluetoothd.txt", "a");
 	//fprintf(log_file, "PREP, MYPID %d vmslide addr %p\n", getpid(), (void*)_dyld_get_image_vmaddr_slide(0));

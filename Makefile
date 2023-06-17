@@ -1,13 +1,13 @@
 TARGET := iphone:clang:latest:7.0
 ARCHS := arm64e arm64
-INSTALL_TARGET_PROCESSES = bluetoothd
+#INSTALL_TARGET_PROCESSES = bluetoothd
 
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = PodsGrant
 
-PodsGrant_FILES = Tweak.x Sharing_Tweak.x
+PodsGrant_FILES = Tweak.x Sharing_Tweak.x general.c
 PodsGrant_CFLAGS = -fobjc-arc
 
 ifeq ($(THEOS_PACKAGE_SCHEME),rootless)
@@ -16,4 +16,5 @@ endif
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += podsgrantadaptivetransparency
+SUBPROJECTS += podsgrantsettings
 include $(THEOS_MAKE_PATH)/aggregate.mk
