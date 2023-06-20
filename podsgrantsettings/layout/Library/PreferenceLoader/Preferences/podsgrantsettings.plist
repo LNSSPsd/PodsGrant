@@ -15,7 +15,7 @@
 		<key>isController</key>
 		<true/>
 		<key>label</key>
-		<string>podsgrantsettings</string>
+		<string>PodsGrant</string>
 	</dict>
 </dict>
 </plist>

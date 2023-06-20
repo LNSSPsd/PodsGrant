@@ -9,6 +9,7 @@ struct address_map_entry {
 	uint64_t first_hook_addr;
 	uint64_t ability_func_addr;
 	uint64_t support_remote_volume_change_addr;
+	uint64_t recv_logging_handler_addr;
 	//uint64_t support_software_volume_addr;
 	// ^ Seems that this ruins things furtheraway so no hooking on that
 };
@@ -32,7 +33,7 @@ static const struct address_map_entry address_map[] = {
 	{14,8,844,0x1002DD678,0x1002DADDC,0x1001D0EB8},
 	{14,4,844,0x1002C80B0,0x1002C5858,0x1001CD004},
 	{14,3,844,0x1002C8B38,0x1002C62E0,0x1001CE730},
-	{13,3,684,0x1002593B0,0x100255414,0x10018FBD0},
+	{13,3,684,0x1002593B0,0x100255414,0x10018FBD0,0x1002070CC},
 	{0,0}
 };
 #else

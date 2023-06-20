@@ -6,6 +6,11 @@
 
 @implementation PGSRootListController
 
+// For iOS 13.*
+- (id)specifier {
+	return nil;
+}
+
 /*- (NSArray *)specifiers {
 	if (!_specifiers) {
 		_specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self];
@@ -31,7 +36,7 @@
 }
 
 - (NSInteger)tableView:(id)tv numberOfRowsInSection:(NSInteger)section {
-	if(section==2)
+	if(section==1)
 		return 1; // Customizable address map not ready yet
 	if(section==1||section==2)
 		return 2;

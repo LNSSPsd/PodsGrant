@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
 #import <UIKit/UIKit.h>
+#include "../general.h"
 
 @interface HCSettings : NSObject
 
@@ -209,6 +210,14 @@ static BluetoothDevice *_get_bluetooth_device(BTSDeviceConfigController *cc) {
 %end
 
 %ctor {
+	FILE *settings_file=fopen(PGS_SETTINGS_FILE, "rb");
+	if(settings_file) {
+		if(!fgetc(settings_file)) {
+			fclose(settings_file);
+			return;
+		}
+		fclose(settings_file);
+	}
 	%init(PAGeneralHooks);
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:[NSString stringWithUTF8String:"com.apple.Preferences"]]) {
 		[[NSBundle bundleWithPath:[NSString stringWithUTF8String:"/System/Library/PreferenceBundles/BluetoothSettings.bundle"]] load];
