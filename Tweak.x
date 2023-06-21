@@ -96,6 +96,7 @@ void* recvLoggingHandler(void *a1, void *a2, void *a3, void *a4, char *a5) {
 		uint32_t len=512;
 		_NSGetExecutablePath(exec_path, &len);
 		if(memcmp(exec_path, "/usr/sbin/bluetoothd", 21)!=0) {
+			settings=NULL;
 			return;
 		}
 	}
@@ -105,7 +106,7 @@ void* recvLoggingHandler(void *a1, void *a2, void *a3, void *a4, char *a5) {
 		settings=NULL;
 		return;
 	}
-	log_file=fopen("/tmp/bluetoothd.txt", "a");
+	//log_file=fopen("/tmp/bluetoothd.txt", "a");
 	//fprintf(log_file, "PREP, MYPID %d vmslide addr %p\n", getpid(), (void*)_dyld_get_image_vmaddr_slide(0));
 	//fflush(log_file);
 	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];

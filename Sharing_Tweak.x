@@ -56,5 +56,7 @@ static struct podsgrant_settings *settings;
 			return;
 		}
 		%init(sharing_hook_grp);
+	}else{
+		settings=NULL;
 	}
 }

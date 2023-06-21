@@ -110,7 +110,7 @@ static NSArray *loadDeviceTable() {
 		return sel_cell;
 	}
 	if(indexPath.row==0) {
-		PSEditableTableCell *editableCell=[[PSEditableTableCell alloc] initWithStyle:1000 reuseIdentifier:nil specifier:nil];
+		PSEditableTableCell *editableCell=[[objc_getClass("PSEditableTableCell") alloc] initWithStyle:1000 reuseIdentifier:nil specifier:nil];
 		[editableCell textField].placeholder=NSSTR("Product ID");
 		customize_pid_textfield=[editableCell textField];
 		return editableCell;
