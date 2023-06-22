@@ -122,7 +122,7 @@
 				if(status_file_err) {
 					UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update as dpkg status file isn't present." preferredStyle:UIAlertControllerStyleAlert];
 					[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-					[self presentViewController:failed_alert animated:0 completion:nil];
+					[self presentViewController:failed_alert animated:1 completion:nil];
 					return;
 				}
 			}
@@ -132,7 +132,7 @@
 				regex_error_pos:{}
 				UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, the tweak isn't installed property." preferredStyle:UIAlertControllerStyleAlert];
 				[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-				[self presentViewController:failed_alert animated:0 completion:nil];
+				[self presentViewController:failed_alert animated:1 completion:nil];
 				return;
 			}
 			NSString *tweak_version=[status_file substringWithRange:[_match rangeAtIndex:2]];
@@ -153,7 +153,7 @@
 						if(error) {
 							UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, request failed, check your network connection." preferredStyle:UIAlertControllerStyleAlert];
 							[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-							[self presentViewController:failed_alert animated:0 completion:nil];
+							[self presentViewController:failed_alert animated:1 completion:nil];
 							check_update_in_progress=0;
 							[tv reloadData];
 							return;
@@ -163,7 +163,7 @@
 							api_error_pos:{}
 							UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, invalid response received." preferredStyle:UIAlertControllerStyleAlert];
 							[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-							[self presentViewController:failed_alert animated:0 completion:nil];
+							[self presentViewController:failed_alert animated:1 completion:nil];
 							check_update_in_progress=0;
 							[tv reloadData];
 							return;
@@ -191,7 +191,7 @@
 						}
 						UIAlertController *update_alert=[UIAlertController alertControllerWithTitle:(char)[update_str characterAtIndex:0]=='A'?@"Update found":@"Well done" message:update_str preferredStyle:UIAlertControllerStyleAlert];
 						[update_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-						[self presentViewController:update_alert animated:0 completion:nil];
+						[self presentViewController:update_alert animated:1 completion:nil];
 						check_update_in_progress=0;
 						[tv reloadData];
 					});
