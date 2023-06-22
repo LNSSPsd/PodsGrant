@@ -48,6 +48,7 @@ static struct podsgrant_settings *settings;
 	char exec_path[512]={0};
 	uint32_t len=512;
 	_NSGetExecutablePath(exec_path, &len);
+	//if(strcmp(exec_path, "/usr/libexec/sharingd")==0)
 	if(memcmp(exec_path, "/usr/sbin/bluetoothd", 21)!=0) {
 		settings=PGS_readSettings(0);
 		if(!settings->is_tweak_enabled) {

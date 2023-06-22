@@ -25,7 +25,7 @@ static NSArray *loadDeviceTable() {
 	NSFileManager *fileManager=[NSFileManager defaultManager];
 	NSArray *cont_1=[fileManager contentsOfDirectoryAtPath:NSSTR("/System/Library/PrivateFrameworks/Sharing.framework/en.lproj") error:nil];
 	NSArray *cont_2=[fileManager contentsOfDirectoryAtPath:NSSTR("/System/Library/PrivateFrameworks/Sharing.framework") error:nil];
-	NSRegularExpression *localizableExp=[NSRegularExpression regularExpressionWithPattern:NSSTR("^Localizable-PID_([0-9]*?).(strings|loctable)$") options:0 error:nil];
+	NSRegularExpression *localizableExp=[NSRegularExpression regularExpressionWithPattern:NSSTR("^Localizable-PID_([0-9]*?)\\.(strings|loctable)$") options:0 error:nil];
 	for(NSString *val in cont_1) {
 		NSTextCheckingResult *_match=[localizableExp firstMatchInString:val options:0 range:NSMakeRange(0, val.length)];
 		if(![_match numberOfRanges])
@@ -91,6 +91,13 @@ static NSArray *loadDeviceTable() {
 	if(section==0||(useDeviceTable&&section==1))
 		return NSSTR("Select from paired devices");
 	return NSSTR("Customize");
+}
+
+- (NSString *)tableView:(id)tv titleForFooterInSection:(NSInteger)section {
+	if(section==0||(useDeviceTable&&section==1)) {
+		return @"The product IDs appeared above may be already patched by this tweak, in such case, you'd have to use the customization textbox below.";
+	}
+	return nil;
 }
 
 - (UITableViewCell *)tableView:(id)tv cellForRowAtIndexPath:(NSIndexPath *)indexPath {

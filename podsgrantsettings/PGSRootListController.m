@@ -27,6 +27,7 @@
 }
 
 - (instancetype)initWithStyle:(UITableViewStyle)style {
+	check_update_in_progress=0;
 	PGS_readSettings_to(&_configuration, 1);
 	return [super initWithStyle:UITableViewStyleGrouped];
 }
@@ -38,8 +39,10 @@
 - (NSInteger)tableView:(id)tv numberOfRowsInSection:(NSInteger)section {
 	if(section==1)
 		return 1; // Customizable address map not ready yet
-	if(section==1||section==2)
-		return 2;
+	//if(section==1)
+	//	return 2;
+	if(section==2)
+		return 3;
 	return 1;
 }
 
@@ -62,7 +65,7 @@
 			}
 			return nil;
 		}
-		return NSSTR("Your iOS version isn't supported, you can set your own addresses to get it working tho.");
+		return NSSTR("Your iOS version isn't supported, you may only get popup dialog working and that's it.");
 	}
 	return sec==1?[NSString stringWithUTF8String:"Product ID customizing enables you identifying yourself's unsupported devices as another product."]:nil;
 }
@@ -88,7 +91,7 @@
 
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 	if(indexPath.section==2) {
-		if(indexPath.row) {
+		if(!indexPath.row) {
 			size_t procs_size;
 			struct kinfo_proc *procs=NULL;
 			int mib[4]={CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
@@ -107,9 +110,99 @@
 			free(procs);
 			[tv deselectRowAtIndexPath:indexPath animated:YES];
 			return;
+		}else if(indexPath.row==1) {
+			[tv deselectRowAtIndexPath:indexPath animated:1];
+			if(check_update_in_progress) {
+				return;
+			}
+			NSError *status_file_err=nil;
+			NSString *status_file=[NSString stringWithContentsOfFile:@"/var/lib/dpkg/status" encoding:NSUTF8StringEncoding error:&status_file_err];
+			if(status_file_err) {
+				status_file=[NSString stringWithContentsOfFile:@"/var/jb/var/lib/dpkg/status" encoding:NSUTF8StringEncoding error:&status_file_err];
+				if(status_file_err) {
+					UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update as dpkg status file isn't present." preferredStyle:UIAlertControllerStyleAlert];
+					[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+					[self presentViewController:failed_alert animated:0 completion:nil];
+					return;
+				}
+			}
+			NSRegularExpression *versionInfoRegex=[NSRegularExpression regularExpressionWithPattern:@"Package: com.lns.pogr\n(.|\n)*?Version: (\\d\\.\\d\\.\\d)(-|\n)" options:0 error:nil];
+			NSTextCheckingResult *_match=[versionInfoRegex firstMatchInString:status_file options:0 range:NSMakeRange(0, [status_file length])];
+			if(![_match numberOfRanges]||[_match numberOfRanges]<=2) {
+				regex_error_pos:{}
+				UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, the tweak isn't installed property." preferredStyle:UIAlertControllerStyleAlert];
+				[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+				[self presentViewController:failed_alert animated:0 completion:nil];
+				return;
+			}
+			NSString *tweak_version=[status_file substringWithRange:[_match rangeAtIndex:2]];
+			NSRegularExpression *preciseVersionRegex=[NSRegularExpression regularExpressionWithPattern:@"(\\d)\\.(\\d)\\.(\\d)" options:0 error:nil];
+			NSTextCheckingResult *pv_match=[preciseVersionRegex firstMatchInString:tweak_version options:0 range:NSMakeRange(0, tweak_version.length)];
+			if([pv_match numberOfRanges]<=3)
+				goto regex_error_pos;
+			int tweak_version_major=[tweak_version substringWithRange:[pv_match rangeAtIndex:1]].intValue;
+			int tweak_version_minor=[tweak_version substringWithRange:[pv_match rangeAtIndex:2]].intValue;
+			int tweak_version_patch=[tweak_version substringWithRange:[pv_match rangeAtIndex:3]].intValue;
+			check_update_in_progress=1;
+			[tv reloadData];
+			dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+				//NSURLRequest *githubReq=[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://api.github.com/repos/lnsspsd/podsgrant/releases/latest"]];
+				NSURLSession *session=[NSURLSession sharedSession];
+				NSURLSessionDataTask *task=[session dataTaskWithURL:[NSURL URLWithString:@"https://api.github.com/repos/lnsspsd/podsgrant/releases/latest"] completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+					dispatch_async(dispatch_get_main_queue(), ^{
+						if(error) {
+							UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, request failed, check your network connection." preferredStyle:UIAlertControllerStyleAlert];
+							[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+							[self presentViewController:failed_alert animated:0 completion:nil];
+							check_update_in_progress=0;
+							[tv reloadData];
+							return;
+						}
+						NSDictionary *githubApiData=[NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+						if(!githubApiData) {
+							api_error_pos:{}
+							UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, invalid response received." preferredStyle:UIAlertControllerStyleAlert];
+							[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+							[self presentViewController:failed_alert animated:0 completion:nil];
+							check_update_in_progress=0;
+							[tv reloadData];
+							return;
+						}
+						NSString *latest_version=githubApiData[@"tag_name"];
+						NSTextCheckingResult *lv_match=[preciseVersionRegex firstMatchInString:latest_version options:0 range:NSMakeRange(0, tweak_version.length)];
+						if([lv_match numberOfRanges]<=3)
+							goto api_error_pos;
+						int latest_version_major=[latest_version substringWithRange:[lv_match rangeAtIndex:1]].intValue;
+						int latest_version_minor=[latest_version substringWithRange:[lv_match rangeAtIndex:2]].intValue;
+						int latest_version_patch=[latest_version substringWithRange:[lv_match rangeAtIndex:3]].intValue;
+						NSString *update_str=[NSString stringWithFormat:@"Your version (%@) is up to date.", tweak_version];
+						if(tweak_version_major<latest_version_major) {
+							goto update_found;
+						}else if(tweak_version_major==latest_version_major) {
+							if(tweak_version_minor<latest_version_minor) {
+								goto update_found;
+							}else if(tweak_version_minor==latest_version_minor&&tweak_version_patch<latest_version_patch) {
+								goto update_found;
+							}
+						}
+						if(0) {
+							update_found:
+							update_str=[NSString stringWithFormat:@"An updated version (%@) is found, while yours is %@.", latest_version, tweak_version];
+						}
+						UIAlertController *update_alert=[UIAlertController alertControllerWithTitle:(char)[update_str characterAtIndex:0]=='A'?@"Update found":@"Well done" message:update_str preferredStyle:UIAlertControllerStyleAlert];
+						[update_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+						[self presentViewController:update_alert animated:0 completion:nil];
+						check_update_in_progress=0;
+						[tv reloadData];
+					});
+				}];
+				[task resume];
+			});
+			return;
+		}else if(indexPath.row==2) {
+			[tv deselectRowAtIndexPath:indexPath animated:YES];
+			[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://github.com/LNSSPsd/PodsGrant")] options:@{} completionHandler:nil];
 		}
-		[tv deselectRowAtIndexPath:indexPath animated:YES];
-		[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://github.com/LNSSPsd/PodsGrant")] options:@{} completionHandler:nil];
 		return;
 	}
 	if(!indexPath.row) {
@@ -153,11 +246,21 @@
 		custom_address_map_btn.accessoryType=UITableViewCellAccessoryDisclosureIndicator;
 		return custom_address_map_btn;
 	}else{
-		if(!indexPath.row) {
+		if(indexPath.row==2) {
 			UITableViewCell *source_code_btn=[UITableViewCell new];
 			source_code_btn.textLabel.text=NSSTR("Source Code");
 			source_code_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 			return source_code_btn;
+		}else if(indexPath.row==1) {
+			UITableViewCell *check_update_btn=[UITableViewCell new];
+			if(check_update_in_progress) {
+				check_update_btn.textLabel.text=@"Checking for update...";
+				check_update_btn.textLabel.textColor=[UIColor systemGrayColor];
+				return check_update_btn;
+			}
+			check_update_btn.textLabel.text=NSSTR("Check for Update");
+			check_update_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
+			return check_update_btn;
 		}
 		UITableViewCell *kill_daemons_btn=[UITableViewCell new];
 		kill_daemons_btn.textLabel.text=NSSTR("Kill Daemons (Apply Settings)");

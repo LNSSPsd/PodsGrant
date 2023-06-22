@@ -56,6 +56,8 @@ struct podsgrant_settings *PGS_readSettings_to(struct podsgrant_settings *config
 			remove(PGS_SETTINGS_FILE);
 			return configuration;
 		}
+	}else{
+		configuration->product_id_mapping=NULL;
 	}
 	uint8_t addr_mapping_entries=fgetc(config_file);
 	configuration->address_mapping_cnt=addr_mapping_entries;
@@ -72,6 +74,8 @@ struct podsgrant_settings *PGS_readSettings_to(struct podsgrant_settings *config
 			remove(PGS_SETTINGS_FILE);
 			return configuration;
 		}
+	}else{
+		configuration->address_mapping=NULL;
 	}
 	fclose(config_file);
 	return configuration;
