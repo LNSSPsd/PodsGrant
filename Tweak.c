@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 #include <substrate.h>
 #include <mach-o/dyld.h>
-#include <Foundation/Foundation.h>
+#include <sys/sysctl.h>
+#include "os_log_handler.h"
 #include "general.h"
 
 static int product_id_offset;
@@ -84,13 +86,27 @@ void* recvLoggingHandler(void *a1, void *a2, void *a3, void *a4, char *a5) {
 	// ^ Seems that this ruins things furtheraway so no hooking on that
 };*/
 
-%dtor {
+void *orig_os_log_impl;
+void my_os_log_impl(void *dso, void *log_ent, uint64_t type, const char *format, uint8_t *buf, uint32_t size) {
+	format_os_log(log_file, log_ent, format, buf, size, 0);
+	fflush(log_file);
+}
+
+__attribute__((destructor))
+static void __podsgrant_main_teardown(void) {
 	if(settings) {
 		PGS_freeSettings(settings);
 	}
 }
 
-%ctor {
+struct _osver {
+	uint16_t majorVersion;
+	uint16_t minorVersion;
+	uint16_t patchVersion;
+};
+
+__attribute__((constructor))
+static void __podsgrant_main_construct(void) {
 	{
 		char exec_path[512]={0};
 		uint32_t len=512;
@@ -109,7 +125,41 @@ void* recvLoggingHandler(void *a1, void *a2, void *a3, void *a4, char *a5) {
 	//log_file=fopen("/tmp/bluetoothd.txt", "a");
 	//fprintf(log_file, "PREP, MYPID %d vmslide addr %p\n", getpid(), (void*)_dyld_get_image_vmaddr_slide(0));
 	//fflush(log_file);
-	NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
+	struct _osver os_version;
+	//NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
+	char os_ver_buf[12];
+	size_t os_ver_len=12;
+	int sysctl_result=sysctlbyname("kern.osproductversion", os_ver_buf, &os_ver_len, NULL, 0);
+	if(sysctl_result!=0) {
+		FILE *err_file=fopen("/tmp/bluetoothd.err.log", "a");
+		if(err_file) {
+			fprintf(err_file, "bluetoothd [PodsGrant]: Failed to get OS version.\n");
+			fclose(err_file);
+		}
+		abort();
+	}
+	os_ver_buf[os_ver_len]=0;
+	char *current_part_ptr=os_ver_buf;
+	int current_part=0;
+	for(char *ptr=os_ver_buf;*ptr!=0;ptr++) {
+		if(*ptr=='.') {
+			*ptr=0;
+			if(!current_part) {
+				os_version.majorVersion=atoi(current_part_ptr);
+				current_part_ptr=ptr+1;
+			}else{
+				os_version.minorVersion=atoi(current_part_ptr);
+				current_part_ptr=ptr+1;
+			}
+			current_part++;
+		}
+	}
+	if(current_part==1) {
+		os_version.minorVersion=atoi(current_part_ptr);
+		os_version.patchVersion=0;
+	}else{
+		os_version.patchVersion=atoi(current_part_ptr);
+	}
 	const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
 	while(map_entry->version_major!=0) {
 		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor)) {
@@ -148,6 +198,7 @@ void* recvLoggingHandler(void *a1, void *a2, void *a3, void *a4, char *a5) {
 		if(map_entry->recv_logging_handler_addr) {
 			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->recv_logging_handler_addr), (void*)recvLoggingHandler, (void**)&recvLoggingHandlerOriginal);
 		}
+		//MSHookFunction((void*)(bin_vmaddr_slide+0x100538D64), (void*)my_os_log_impl, (void**)&orig_os_log_impl);
 		map_entry++;
 		break;
 	}

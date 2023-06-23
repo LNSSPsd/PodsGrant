@@ -42,7 +42,7 @@
 	//if(section==1)
 	//	return 2;
 	if(section==2)
-		return 3;
+		return 4;
 	return 1;
 }
 
@@ -202,6 +202,18 @@
 		}else if(indexPath.row==2) {
 			[tv deselectRowAtIndexPath:indexPath animated:YES];
 			[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://github.com/LNSSPsd/PodsGrant")] options:@{} completionHandler:nil];
+		}else if(indexPath.row==3) {
+			UIAlertController *donation_warning=[UIAlertController alertControllerWithTitle:NSSTR("Warning") message:NSSTR("You would get NO benefit for your donation, including things about your issues with this tweak, proceed?") preferredStyle:UIAlertControllerStyleAlert];
+			UIAlertAction *cancel_opt=[UIAlertAction actionWithTitle:NSSTR("Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+				[tv deselectRowAtIndexPath:indexPath animated:1];
+			}];
+			[donation_warning addAction:cancel_opt];
+			UIAlertAction *proceed_opt=[UIAlertAction actionWithTitle:NSSTR("Proceed") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+				[tv deselectRowAtIndexPath:indexPath animated:YES];
+				[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://donate.stripe.com/5kA4hb2ZlfmJ7gQ144")] options:@{} completionHandler:nil];
+			}];
+			[donation_warning addAction:proceed_opt];
+			[self presentViewController:donation_warning animated:1 completion:nil];
 		}
 		return;
 	}
@@ -261,6 +273,11 @@
 			check_update_btn.textLabel.text=NSSTR("Check for Update");
 			check_update_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 			return check_update_btn;
+		}else if(indexPath.row==3) {
+			UITableViewCell *donate_btn=[UITableViewCell new];
+			donate_btn.textLabel.text=NSSTR("Donate");
+			donate_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
+			return donate_btn;
 		}
 		UITableViewCell *kill_daemons_btn=[UITableViewCell new];
 		kill_daemons_btn.textLabel.text=NSSTR("Kill Daemons (Apply Settings)");

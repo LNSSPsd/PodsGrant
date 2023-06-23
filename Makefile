@@ -7,7 +7,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = PodsGrant
 
-PodsGrant_FILES = Tweak.x Sharing_Tweak.x general.c
+PodsGrant_FILES = Tweak.c Sharing_Tweak.x general.c os_log_handler.c
 PodsGrant_CFLAGS = -fobjc-arc
 
 ifeq ($(THEOS_PACKAGE_SCHEME),rootless)

@@ -1,0 +1,4 @@
+#! /bin/sh
+
+echo Removing configuration file
+rm -f /var/mobile/Library/Preferences/com.lns.pogr.bin

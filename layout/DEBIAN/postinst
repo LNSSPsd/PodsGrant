@@ -1,6 +1,7 @@
 #!/bin/sh
 
-killall -TERM bluetoothd || true
-killall -TERM sharingd || true
-killall -TERM heard ||true
-killall -TERM SharingViewService || true
+echo Reloading daemons
+killall -TERM bluetoothd 2>/dev/null || true
+killall -TERM sharingd 2>/dev/null || true
+killall -TERM heard 2>/dev/null ||true
+killall -TERM SharingViewService 2>/dev/null || true
