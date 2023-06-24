@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "PGSRootListController.h"
 #import "PGSProductIDMappingController.h"
+#import "PGSCreditsViewController.h"
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
@@ -42,7 +43,7 @@
 	//if(section==1)
 	//	return 2;
 	if(section==2)
-		return 4;
+		return 5;
 	return 1;
 }
 
@@ -214,6 +215,10 @@
 			}];
 			[donation_warning addAction:proceed_opt];
 			[self presentViewController:donation_warning animated:1 completion:nil];
+		}else if(indexPath.row==4) {
+			PGSCreditsViewController *creditsVC=[[PGSCreditsViewController alloc] init];
+			[self.navigationController pushViewController:creditsVC animated:1];
+			[tv deselectRowAtIndexPath:indexPath animated:YES];
 		}
 		return;
 	}
@@ -278,6 +283,11 @@
 			donate_btn.textLabel.text=NSSTR("Donate");
 			donate_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 			return donate_btn;
+		}else if(indexPath.row==4) {
+			UITableViewCell *credits_cell=[UITableViewCell new];
+			credits_cell.textLabel.text=@"Credits";
+			credits_cell.accessoryType=UITableViewCellAccessoryDisclosureIndicator;
+			return credits_cell;
 		}
 		UITableViewCell *kill_daemons_btn=[UITableViewCell new];
 		kill_daemons_btn.textLabel.text=NSSTR("Kill Daemons (Apply Settings)");
