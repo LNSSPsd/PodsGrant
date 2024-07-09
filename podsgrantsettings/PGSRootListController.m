@@ -204,16 +204,11 @@
 			[tv deselectRowAtIndexPath:indexPath animated:YES];
 			[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://github.com/LNSSPsd/PodsGrant")] options:@{} completionHandler:nil];
 		}else if(indexPath.row==3) {
-			UIAlertController *donation_warning=[UIAlertController alertControllerWithTitle:NSSTR("Warning") message:NSSTR("You would get NO benefit for your donation, including things about your issues with this tweak, proceed?") preferredStyle:UIAlertControllerStyleAlert];
+			UIAlertController *donation_warning=[UIAlertController alertControllerWithTitle:NSSTR("Donation") message:NSSTR("Not accepting donations currently") preferredStyle:UIAlertControllerStyleAlert];
 			UIAlertAction *cancel_opt=[UIAlertAction actionWithTitle:NSSTR("Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
 				[tv deselectRowAtIndexPath:indexPath animated:1];
 			}];
 			[donation_warning addAction:cancel_opt];
-			UIAlertAction *proceed_opt=[UIAlertAction actionWithTitle:NSSTR("Proceed") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-				[tv deselectRowAtIndexPath:indexPath animated:YES];
-				[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://donate.stripe.com/5kA4hb2ZlfmJ7gQ144")] options:@{} completionHandler:nil];
-			}];
-			[donation_warning addAction:proceed_opt];
 			[self presentViewController:donation_warning animated:1 completion:nil];
 		}else if(indexPath.row==4) {
 			PGSCreditsViewController *creditsVC=[[PGSCreditsViewController alloc] init];

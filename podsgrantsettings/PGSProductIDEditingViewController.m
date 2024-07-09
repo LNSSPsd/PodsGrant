@@ -10,12 +10,12 @@ extern NSString *_formatProductID(uint16_t product_id);
 @end
 
 @interface PGS__just_an_implementation_forwarder : NSObject
-- (void)deleteConfigurationAtAddress:(struct product_id_map_entry *)addr;
+- (void)deleteConfigurationAtAddress:(struct product_id_map_entry_custom *)addr;
 @end
 
 @implementation PGSProductIDEditingViewController
 
-- (instancetype)initWithEntry:(struct product_id_map_entry *)entry delegate:(id)delegate isConstant:(BOOL)isConstant {
+- (instancetype)initWithEntry:(struct product_id_map_entry_custom *)entry delegate:(id)delegate isConstant:(BOOL)isConstant {
 	_entry=entry;
 	_delegate=delegate;
 	_isConstant=isConstant;

@@ -9,6 +9,7 @@
 static int product_id_offset;
 FILE *log_file;
 static struct podsgrant_settings *settings;
+extern unsigned char PGS_global_os_ver;
 
 unsigned int (*orig_1002E1F9C)(void *a1, void *a2, void *a3, void *a4, void *a5);
 unsigned int my_1002E1F9C(void *a1, void *a2, void *a3, void *a4, void *a5) {
@@ -146,6 +147,7 @@ static void __podsgrant_main_construct(void) {
 			*ptr=0;
 			if(!current_part) {
 				os_version.majorVersion=atoi(current_part_ptr);
+				PGS_global_os_ver=os_version.majorVersion;
 				current_part_ptr=ptr+1;
 			}else{
 				os_version.minorVersion=atoi(current_part_ptr);

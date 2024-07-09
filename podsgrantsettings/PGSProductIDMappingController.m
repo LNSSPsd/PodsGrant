@@ -4,6 +4,8 @@
 NSString *_formatProductID(uint16_t product_id) {
 	#define RET_PID(name) return [NSString stringWithFormat:NSSTR(name " (%d)"), product_id]
 	switch (product_id) {
+	case 8228:
+		RET_PID("AirPods Pro 2, USB-C");
 	case 0x2014:
 		RET_PID("AirPods Pro 2");
 	case 0x200E:
@@ -30,7 +32,7 @@ NSString *_formatProductID(uint16_t product_id) {
 
 - (void)saveSettings {
 	if(_configuration->product_id_mapping) {
-		for(struct product_id_map_entry *entry=_configuration->product_id_mapping;entry<_configuration->product_id_mapping+_configuration->product_id_mapping_cnt;entry++) {
+		for(struct product_id_map_entry_custom *entry=_configuration->product_id_mapping;entry<_configuration->product_id_mapping+_configuration->product_id_mapping_cnt;entry++) {
 			if(!entry->original||!entry->target) {
 				UIAlertController *invalid_conf_alert=[UIAlertController alertControllerWithTitle:NSSTR("Invalid Configuration") message:NSSTR("You cannot leave a 0 in the configuration.") preferredStyle:UIAlertControllerStyleAlert];
 				[invalid_conf_alert addAction:[UIAlertAction actionWithTitle:NSSTR("OK") style:UIAlertActionStyleCancel handler:nil]];
@@ -90,24 +92,24 @@ NSString *_formatProductID(uint16_t product_id) {
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 	[tv deselectRowAtIndexPath:indexPath animated:1];
 	if(indexPath.section==0) {
-		PGSProductIDEditingViewController *editingVC=[[PGSProductIDEditingViewController alloc] initWithEntry:(struct product_id_map_entry *)(product_id_map_preset+indexPath.row) delegate:nil isConstant:1];
+		PGSProductIDEditingViewController *editingVC=[[PGSProductIDEditingViewController alloc] initWithEntry:(struct product_id_map_entry_custom *)(product_id_map_preset+indexPath.row) delegate:nil isConstant:1];
 		UINavigationController *nav=[[UINavigationController alloc] initWithRootViewController:editingVC];
 		[self presentViewController:nav animated:1 completion:nil];
 		return;
 	}
 	if(indexPath.section&&indexPath.row!=_configuration->product_id_mapping_cnt) {
-		PGSProductIDEditingViewController *editingVC=[[PGSProductIDEditingViewController alloc] initWithEntry:(struct product_id_map_entry *)(_configuration->product_id_mapping+indexPath.row) delegate:self isConstant:0];
+		PGSProductIDEditingViewController *editingVC=[[PGSProductIDEditingViewController alloc] initWithEntry:(struct product_id_map_entry_custom *)(_configuration->product_id_mapping+indexPath.row) delegate:self isConstant:0];
 		UINavigationController *nav=[[UINavigationController alloc] initWithRootViewController:editingVC];
 		[self presentViewController:nav animated:1 completion:nil];
 		return;
 	}else{
-		struct product_id_map_entry *val;
+		struct product_id_map_entry_custom *val;
 		if(!_configuration->product_id_mapping) {
-			val=_configuration->product_id_mapping=malloc(sizeof(struct product_id_map_entry));
+			val=_configuration->product_id_mapping=malloc(sizeof(struct product_id_map_entry_custom));
 			_configuration->product_id_mapping_cnt++;
 		}else{
 			_configuration->product_id_mapping_cnt++;
-			_configuration->product_id_mapping=realloc(_configuration->product_id_mapping,_configuration->product_id_mapping_cnt*sizeof(struct product_id_map_entry));
+			_configuration->product_id_mapping=realloc(_configuration->product_id_mapping,_configuration->product_id_mapping_cnt*sizeof(struct product_id_map_entry_custom));
 			val=_configuration->product_id_mapping+_configuration->product_id_mapping_cnt-1;
 		}
 		[self reloadData];
@@ -122,8 +124,8 @@ NSString *_formatProductID(uint16_t product_id) {
 	[self.tableView reloadData];
 }
 
-- (void)deleteConfigurationAtAddress:(struct product_id_map_entry *)addr {
-	memcpy(addr, addr+1, (_configuration->product_id_mapping_cnt-(addr-_configuration->product_id_mapping))*sizeof(struct product_id_map_entry));
+- (void)deleteConfigurationAtAddress:(struct product_id_map_entry_custom *)addr {
+	memcpy(addr, addr+1, (_configuration->product_id_mapping_cnt-(addr-_configuration->product_id_mapping))*sizeof(struct product_id_map_entry_custom));
 	_configuration->product_id_mapping_cnt--;
 	[self reloadData];
 }
@@ -145,7 +147,7 @@ NSString *_formatProductID(uint16_t product_id) {
 			add_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 			return add_btn;
 		}
-		struct product_id_map_entry *entry=_configuration->product_id_mapping+indexPath.row;
+		struct product_id_map_entry_custom *entry=_configuration->product_id_mapping+indexPath.row;
 		UITableViewCell *confCell=[[UITableViewCell alloc] initWithStyle:1 reuseIdentifier:NSSTR("productIDMC_conf")];
 		confCell.textLabel.text=_formatProductID(entry->original);
 		//if(!confCell.contentView)confCell.contentView=[[UILabel alloc] initWithFrame:CGRectMake(0,0,260,25)];

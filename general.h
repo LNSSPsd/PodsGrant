@@ -14,9 +14,17 @@ struct address_map_entry {
 	// ^ Seems that this ruins things furtheraway so no hooking on that
 };
 
+struct product_id_map_entry_custom {
+	uint16_t original;
+	uint16_t target;
+};
+
 struct product_id_map_entry {
 	uint16_t original;
 	uint16_t target;
+	uint8_t  minimum_ios;
+	uint8_t  maximum_ios;
+	// [minimum_ios, maximum_ios] (closed interval)
 };
 
 #ifndef __arm64e__
@@ -52,6 +60,13 @@ static const struct address_map_entry address_map[] = {
 // iOS 15.4 (Thanks @babyf2sh)
 // iOS 15.6 (Thanks @NotAnEvilScientist, #43)
 static const struct address_map_entry address_map[] = {
+	{16,6,968,0x10039EB6C,0x10039BF8C,0},
+	{16,5,968,0x10039E95C,0x10039BD7C,0},
+	{16,4,968,0x10039E790,0x10039BBB0,0},
+	{16,3,968,0x100390E3C,0x10038E328,0},
+	{16,2,968,0x100391184,0x10038E670,0},
+	{16,1,968,0x10038B288,0x100388774,0},
+	{16,0,968,0x10038D478,0x10038A964,0},
 	{15,6,924,0x100321ED0,0x10031F560,0},
 	{15,4,924,0x100348DB4,0x1003462E0,0},
 	{15,3,908,0x1003362C8,0x1003337B8,0}, // Software volume changing is natively supported
@@ -72,16 +87,18 @@ static const struct address_map_entry address_map[] = {
 #endif
 
 static const struct product_id_map_entry product_id_map_preset[] = {
-	{0x2014, 0x200E},
-	{8211, 8207},
-	{8214, 8209},
-	{0, 0}
+	{8212, 8206, 0, 15},
+	{8228, 8206, 0, 15},
+	{8228, 8212, 16, 255}, // iOS 16 natively supports lightning airpods pro 2 ig
+	{8211, 8207, 0, 255},
+	{8214, 8209, 0, 255},
+	{0, 0, 0, 0}
 };
 
 struct podsgrant_settings {
 	uint8_t is_tweak_enabled;
 	uint8_t is_managed_structure;
-	struct product_id_map_entry *product_id_mapping;
+	struct product_id_map_entry_custom *product_id_mapping;
 	struct address_map_entry *address_mapping;
 	uint8_t product_id_mapping_cnt;
 	uint8_t address_mapping_cnt;

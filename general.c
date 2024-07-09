@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+unsigned char PGS_global_os_ver=0;
 
 int PGS_saveSettings(struct podsgrant_settings *configuration) {
 	FILE *config_file=fopen(PGS_SETTINGS_FILE, "wb");
@@ -10,7 +11,7 @@ int PGS_saveSettings(struct podsgrant_settings *configuration) {
 	}
 	fputc(configuration->is_tweak_enabled, config_file);
 	fputc(configuration->product_id_mapping_cnt, config_file);
-	fwrite(configuration->product_id_mapping, sizeof(struct product_id_map_entry), configuration->product_id_mapping_cnt, config_file);
+	fwrite(configuration->product_id_mapping, sizeof(struct product_id_map_entry_custom), configuration->product_id_mapping_cnt, config_file);
 	fputc(configuration->address_mapping_cnt, config_file);
 	fwrite(configuration->address_mapping, sizeof(struct address_map_entry), configuration->address_mapping_cnt, config_file);
 	if(ferror(config_file)!=0) {
@@ -45,8 +46,8 @@ struct podsgrant_settings *PGS_readSettings_to(struct podsgrant_settings *config
 	uint8_t product_id_mapping_entries=fgetc(config_file);
 	configuration->product_id_mapping_cnt=product_id_mapping_entries;
 	if(product_id_mapping_entries) {
-		configuration->product_id_mapping=malloc((product_id_mapping_entries)*sizeof(struct product_id_map_entry));
-		fread(configuration->product_id_mapping, sizeof(struct product_id_map_entry),product_id_mapping_entries,config_file);
+		configuration->product_id_mapping=malloc((product_id_mapping_entries)*sizeof(struct product_id_map_entry_custom));
+		fread(configuration->product_id_mapping, sizeof(struct product_id_map_entry_custom),product_id_mapping_entries,config_file);
 		if(ferror(config_file)!=0) { // Early EOF or IO error
 			fclose(config_file);
 			configuration->is_tweak_enabled=0;
@@ -99,7 +100,7 @@ void PGS_freeSettings(struct podsgrant_settings *conf) {
 }
 
 uint16_t PGS_patchProductId(struct podsgrant_settings *conf, uint16_t original) {
-	for(struct product_id_map_entry *entry=conf->product_id_mapping;entry<conf->product_id_mapping;entry++) {
+	for(struct product_id_map_entry_custom *entry=conf->product_id_mapping;entry<conf->product_id_mapping+conf->product_id_mapping_cnt;entry++) {
 		if(entry->original==original) {
 			return entry->target;
 		}
@@ -107,6 +108,8 @@ uint16_t PGS_patchProductId(struct podsgrant_settings *conf, uint16_t original) 
 	for(const struct product_id_map_entry *entry=product_id_map_preset;;entry++) {
 		if(!entry->original)
 			break;
+		if(PGS_global_os_ver>entry->maximum_ios||PGS_global_os_ver<entry->minimum_ios)
+			continue;
 		if(entry->original==original) {
 			return entry->target;
 		}
