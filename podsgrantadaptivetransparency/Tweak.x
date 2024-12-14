@@ -65,7 +65,7 @@
 
 %end
 
-// How this work:
+// How this works:
 // Preferences.app - [PASettings setAdaptiveTransparencyEnabled...] (What we added)
 //    |
 // Preferences.app - [PASettings setTransparencyCustomized...]
