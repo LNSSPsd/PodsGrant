@@ -15,6 +15,8 @@ ifeq ($(THEOS_PACKAGE_SCHEME),rootless)
 endif
 
 include $(THEOS_MAKE_PATH)/tweak.mk
-SUBPROJECTS += podsgrantadaptivetransparency
+ifneq ($(THEOS_PACKAGE_SCHEME),rootless)
+	SUBPROJECTS += podsgrantadaptivetransparency
+endif
 SUBPROJECTS += podsgrantsettings
 include $(THEOS_MAKE_PATH)/aggregate.mk
