@@ -60,15 +60,16 @@
 		NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
 		const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
 		while(map_entry->version_major!=0) {
-			if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor)) {
+			if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&(map_entry->version_patch==255||os_version.patchVersion==map_entry->version_patch))) {
 				map_entry++;
 				continue;
 			}
 			return nil;
 		}
-		return NSSTR("Your iOS version isn't supported, you may only get popup dialog working and that's it.");
+		return NSSTR("Your iOS version is not supported, you may only get popup dialog working. Please submit an issue on GitHub to request support.");
 	}
-	return sec==1?[NSString stringWithUTF8String:"Product ID customizing enables you identifying yourself's unsupported devices as another product."]:nil;
+	//return sec==1?[NSString stringWithUTF8String:""]:nil;
+	return nil;
 }
 
 - (void)_sw_enabled_switch:(UISwitch *)the_switch {
@@ -127,7 +128,7 @@
 					return;
 				}
 			}
-			NSRegularExpression *versionInfoRegex=[NSRegularExpression regularExpressionWithPattern:@"Package: com.lns.pogr\n(.|\n)*?Version: (\\d\\.\\d\\.\\d)(-|\n)" options:0 error:nil];
+			NSRegularExpression *versionInfoRegex=[NSRegularExpression regularExpressionWithPattern:@"Package: com.lns.pogr\n(.|\n)*?Version: (\\d\\.\\d\\.\\d)(-|~|\n)" options:0 error:nil];
 			NSTextCheckingResult *_match=[versionInfoRegex firstMatchInString:status_file options:0 range:NSMakeRange(0, [status_file length])];
 			if(![_match numberOfRanges]||[_match numberOfRanges]<=2) {
 				regex_error_pos:{}
@@ -188,7 +189,7 @@
 						}
 						if(0) {
 							update_found:
-							update_str=[NSString stringWithFormat:@"An updated version (%@) is found, while yours is %@.", latest_version, tweak_version];
+							update_str=[NSString stringWithFormat:@"An updated version (%@) is found, while your version is %@.", latest_version, tweak_version];
 						}
 						UIAlertController *update_alert=[UIAlertController alertControllerWithTitle:(char)[update_str characterAtIndex:0]=='A'?@"Update found":@"Well done" message:update_str preferredStyle:UIAlertControllerStyleAlert];
 						[update_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
@@ -203,14 +204,14 @@
 		}else if(indexPath.row==2) {
 			[tv deselectRowAtIndexPath:indexPath animated:YES];
 			[[UIApplication sharedApplication] openURL:[NSURL URLWithString:NSSTR("https://github.com/LNSSPsd/PodsGrant")] options:@{} completionHandler:nil];
-		}else if(indexPath.row==3) {
+		}else if(/*indexPath.row==3*/0) {
 			UIAlertController *donation_warning=[UIAlertController alertControllerWithTitle:NSSTR("Donation") message:NSSTR("Not accepting donations currently") preferredStyle:UIAlertControllerStyleAlert];
 			UIAlertAction *cancel_opt=[UIAlertAction actionWithTitle:NSSTR("Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
 				[tv deselectRowAtIndexPath:indexPath animated:1];
 			}];
 			[donation_warning addAction:cancel_opt];
 			[self presentViewController:donation_warning animated:1 completion:nil];
-		}else if(indexPath.row==4) {
+		}else if(indexPath.row==3) {
 			PGSCreditsViewController *creditsVC=[[PGSCreditsViewController alloc] init];
 			[self.navigationController pushViewController:creditsVC animated:1];
 			[tv deselectRowAtIndexPath:indexPath animated:YES];
@@ -274,11 +275,6 @@
 			check_update_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 			return check_update_btn;
 		}else if(indexPath.row==3) {
-			UITableViewCell *donate_btn=[UITableViewCell new];
-			donate_btn.textLabel.text=NSSTR("Donate");
-			donate_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
-			return donate_btn;
-		}else if(indexPath.row==4) {
 			UITableViewCell *credits_cell=[UITableViewCell new];
 			credits_cell.textLabel.text=@"Credits";
 			credits_cell.accessoryType=UITableViewCellAccessoryDisclosureIndicator;
@@ -289,7 +285,6 @@
 		kill_daemons_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 		return kill_daemons_btn;
 	}
-	// This'd never happen tho
 	return nil;
 }
 

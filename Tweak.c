@@ -164,7 +164,7 @@ static void __podsgrant_main_construct(void) {
 	}
 	const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
 	while(map_entry->version_major!=0) {
-		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor)) {
+		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&(map_entry->version_patch==255||os_version.patchVersion==map_entry->version_patch))) {
 			map_entry++;
 			continue;
 		}

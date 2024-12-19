@@ -4,10 +4,12 @@
 NSString *_formatProductID(uint16_t product_id) {
 	#define RET_PID(name) return [NSString stringWithFormat:NSSTR(name " (%d)"), product_id]
 	switch (product_id) {
+	case 8219:
+		RET_PID("AirPods 4");
 	case 8228:
 		RET_PID("AirPods Pro 2, USB-C");
 	case 0x2014:
-		RET_PID("AirPods Pro 2");
+		RET_PID("AirPods Pro 2, Lightning");
 	case 0x200E:
 		RET_PID("AirPods Pro");
 	case 8211:
