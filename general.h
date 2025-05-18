@@ -28,6 +28,7 @@ struct product_id_map_entry {
 	// [minimum_ios, maximum_ios] (closed interval)
 };
 
+#if 0
 #ifndef __arm64e__
 // Not an arm64e device
 // For arm64e devices, system binaries are arm64e too, while user applications are still arm64
@@ -88,6 +89,7 @@ static const struct address_map_entry address_map[] = {
 	{0,0}
 };
 #endif
+#endif
 
 static const struct product_id_map_entry product_id_map_preset[] = {
 	{8212, 8206, 0, 15},
@@ -120,3 +122,6 @@ int PGS_saveSettings(struct podsgrant_settings *configuration);
 struct podsgrant_settings *PGS_readSettings_to(struct podsgrant_settings *configuration, int read_full_anyway);
 struct podsgrant_settings *PGS_readSettings(int read_full_anyway);
 void PGS_freeSettings(struct podsgrant_settings *conf);
+
+// uint64_t[3]
+int PGS_findAddresses(uint64_t *addresses,uint32_t *pid_offset);

@@ -1,6 +1,7 @@
 #include "general.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 unsigned char PGS_global_os_ver=0;
 
@@ -115,5 +116,137 @@ uint16_t PGS_patchProductId(struct podsgrant_settings *conf, uint16_t original) 
 		}
 	}
 	return 0;
+}
+
+static uint32_t match_arr_1[]={
+	// LDRB W*, [ X0, #* ]
+	0xffc003e0, 0x39400000,
+	// CBZ W*, *
+	0xff000000, 0x34000000,
+	// LDR W*, [ X0, #* ]
+	0xffc003e0, 0xb9400000,
+	// STR W*, [ X1 ]
+	0xffc003e0, 0xb9000020,
+	// LDR W*, [ X0, #* ]
+	0xffc003e0, 0xb9400000,
+	// STR W*, [ X2 ]
+	0xffc003e0, 0xb9000040,
+	// LDR W*, [ X0, #* ]
+	0xffc003e0, 0xb9400000,
+	// STR W*, [ X3 ]
+	0xffc003e0, 0xb9000060,
+	// LDR W*, [ X0, #* ]
+	0xffc003e0, 0xb9400000,
+	// STR W*, [ X4 ]
+	0xffc003e0, 0xb9000080,
+	// MOV W0, #1
+	//0xffffffff, 0x320003e0,
+	// RET
+	//0xffffffff, 0xd65f03c0
+};
+
+static uint32_t match_arr_2[]={
+	// LDR W8, [ X0, * ]
+	0xffc003ff, 0xb9400008,
+	// CMP W8, #0x4C
+	0xffffffff, 0x7101311f,
+	// B.NE *
+	0xff00001f, 0x54000001,
+	// LDR W*, [ X*, * ]
+	0xffc00000, 0xb9400000,
+	// MOV W8, #0xFFFFDFFE
+	0xffffffff, 0x12840028
+};
+
+static uint32_t match_arr_3[]={
+	// ADRP X*, *
+	0x9f000000, 0x90000000,
+	// LDR X*, [ X*, * ]
+	0xffc00000, 0xf9400000,
+	// ADRP X*, *
+	0x9f000000, 0x90000000,
+	// LDR X*, [ X*, * ]
+	0xffc00000, 0xf9400000,
+	// CMP W1, #0
+	0xffffffff, 0x7100003f,
+	// CSEL X*, X*, X*, NE
+	0xffe0fc00, 0x9a801000,
+	// LDR X2, [ X* ]
+	0xfffffc1f, 0xf9400002,
+	// ADRP X1, *
+	0x9f00001f, 0x90000001,
+	// ADD X1, X1, *
+	0xff8003ff, 0x91000021,
+	// B *
+	0xfc000000, 0x14000000
+};
+
+static int match_instructions(uint32_t *out, size_t osz, uint32_t *target, size_t tsz, FILE *bin) {
+	fseek(bin,0,SEEK_SET);
+	int total_cnt=0;
+	size_t match_cnt=0;
+	unsigned int val;
+	while((fread(&val,1,4,bin))==4) {
+		if((target[match_cnt*2]&val)==target[match_cnt*2+1]) {
+			match_cnt++;
+			if(match_cnt==tsz/8) {
+				out[total_cnt]=ftell(bin)-tsz/2;
+				total_cnt++;
+				if(total_cnt==osz)
+					break;
+				//printf("Matched at %p.\n",(void*)(ftell(bin)-sizeof(match_arr)/2));
+				match_cnt=0;
+				continue;
+			}
+		}else{
+			match_cnt=0;
+		}
+	}
+	return total_cnt;
+}
+
+int PGS_findAddresses(uint64_t *addresses,uint32_t *product_id_offset) {
+	FILE *bin=fopen("/usr/sbin/bluetoothd","rb");
+	if(!bin)
+		return 0;
+	uint32_t results[16];
+	int first_match_cnt=match_instructions(results,16,match_arr_1,sizeof(match_arr_1),bin);
+	if(first_match_cnt!=1) {
+		fclose(bin);
+		return 0;
+	}
+	addresses[0]=(uint64_t)results[0]+0x100000000;
+	if(product_id_offset) {
+		uint32_t product_id_ldr;
+		fseek(bin,results[0]+6*4,SEEK_SET);
+		fread(&product_id_ldr,1,4,bin);
+		*product_id_offset=((product_id_ldr>>10)&((1<<12)-1))<<2;
+	}
+	int second_match_cnt=match_instructions(results,16,match_arr_2,sizeof(match_arr_2),bin);
+	if(second_match_cnt!=1) {
+		fclose(bin);
+		return 0;
+	}
+	addresses[1]=(uint64_t)results[0]+0x100000000;
+	addresses[2]=0;
+	int third_match_cnt=match_instructions(results,16,match_arr_3,sizeof(match_arr_3),bin);
+	for(int i=0;i<third_match_cnt;i++) {
+		fseek(bin,results[i]+7*4,SEEK_SET);
+		unsigned int adrp_and_add[2];
+		fread(adrp_and_add,1,8,bin);
+		uint64_t adrp=*adrp_and_add;
+		uint64_t addr=(((adrp>>5)&((1<<19)-1))<<14)|(((adrp>>29)&3)<<12);
+		addr+=(results[i]>>12)<<12;
+		addr+=(adrp_and_add[1]>>10)&0xfff;
+		fseek(bin,addr,SEEK_SET);
+		char buf[45];
+		fread(buf,1,45,bin);
+		if(strcmp(buf,"kBTAudioMsgPropertySupportRemoteVolumeChange")==0) {
+			addresses[2]=(uint64_t)results[i]+0x100000000;
+			break;
+		}
+	}
+	fclose(bin);
+	return 1;
 }
 

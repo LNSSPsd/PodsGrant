@@ -108,6 +108,11 @@ int main(int argc, char *argv[]) {
 	}
 	if(first_match_cnt!=0) {
 		printf("Found first addr: %p\n",(void*)(0x100000000+results[0]));
+		uint32_t product_id_ldr;
+		fseek(bin,results[0]+6*4,SEEK_SET);
+		fread(&product_id_ldr,1,4,bin);
+		uint32_t offset=((product_id_ldr>>10)&((1<<12)-1))<<2;
+		printf("Product ID offset=%d\n",offset);
 	}
 	int second_match_cnt=match_instructions(results,16,match_arr_2,sizeof(match_arr_2),bin);
 	if(second_match_cnt!=1) {

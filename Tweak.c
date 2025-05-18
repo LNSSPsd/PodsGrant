@@ -6,7 +6,7 @@
 #include "os_log_handler.h"
 #include "general.h"
 
-static int product_id_offset;
+static unsigned int product_id_offset;
 FILE *log_file;
 static struct podsgrant_settings *settings;
 extern unsigned char PGS_global_os_ver;
@@ -100,12 +100,6 @@ static void __podsgrant_main_teardown(void) {
 	}
 }
 
-struct _osver {
-	uint16_t majorVersion;
-	uint16_t minorVersion;
-	uint16_t patchVersion;
-};
-
 __attribute__((constructor))
 static void __podsgrant_main_construct(void) {
 	{
@@ -126,7 +120,6 @@ static void __podsgrant_main_construct(void) {
 	//log_file=fopen("/tmp/bluetoothd.txt", "a");
 	//fprintf(log_file, "PREP, MYPID %d vmslide addr %p\n", getpid(), (void*)_dyld_get_image_vmaddr_slide(0));
 	//fflush(log_file);
-	struct _osver os_version;
 	//NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
 	char os_ver_buf[12];
 	size_t os_ver_len=12;
@@ -140,70 +133,39 @@ static void __podsgrant_main_construct(void) {
 		abort();
 	}
 	os_ver_buf[os_ver_len]=0;
-	char *current_part_ptr=os_ver_buf;
-	int current_part=0;
 	for(char *ptr=os_ver_buf;*ptr!=0;ptr++) {
 		if(*ptr=='.') {
 			*ptr=0;
-			if(!current_part) {
-				os_version.majorVersion=atoi(current_part_ptr);
-				PGS_global_os_ver=os_version.majorVersion;
-				current_part_ptr=ptr+1;
-			}else{
-				os_version.minorVersion=atoi(current_part_ptr);
-				current_part_ptr=ptr+1;
-			}
-			current_part++;
+			PGS_global_os_ver=atoi(os_ver_buf);
 		}
 	}
-	if(current_part==1) {
-		os_version.minorVersion=atoi(current_part_ptr);
-		os_version.patchVersion=0;
-	}else{
-		os_version.patchVersion=atoi(current_part_ptr);
+	uint64_t all_addr[3];
+	int found=PGS_findAddresses(all_addr,&product_id_offset);
+	if(!found)
+		return;
+	uint64_t bin_vmaddr_slide=0;
+	#ifndef IS_ROOTLESS
+	bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(0);
+	#else
+	int image_count=_dyld_image_count();
+	for(int i=0;i<image_count;i++) {
+		const char *img_name=_dyld_get_image_name(i);
+		if(memcmp(img_name, "/usr/sbin/bluetoothd\0", 21)==0) {
+			bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(i);
+			break;
+		}
 	}
-	const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
-	while(map_entry->version_major!=0) {
-		if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&(map_entry->version_patch==255||os_version.patchVersion==map_entry->version_patch))) {
-			map_entry++;
-			continue;
+	if(!bin_vmaddr_slide) {
+		FILE *err_file=fopen("/tmp/bluetoothd.err.log", "a");
+		if(err_file) {
+			fprintf(err_file, "bluetoothd [PodsGrant]: image index for `bluetoothd` not found.\n");
+			fclose(err_file);
 		}
-		//fprintf(log_file, "FOUND ENTRY\n");
-		//fflush(log_file);
-		product_id_offset=map_entry->product_id_offset;
-		uint64_t bin_vmaddr_slide=0;
-		#ifndef IS_ROOTLESS
-		bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(0);
-		#else
-		int image_count=_dyld_image_count();
-		for(int i=0;i<image_count;i++) {
-			const char *img_name=_dyld_get_image_name(i);
-			if(memcmp(img_name, "/usr/sbin/bluetoothd\0", 21)==0) {
-				bin_vmaddr_slide=_dyld_get_image_vmaddr_slide(i);
-				break;
-			}
-		}
-		if(!bin_vmaddr_slide) {
-			FILE *err_file=fopen("/tmp/bluetoothd.err.log", "a");
-			if(err_file) {
-				fprintf(err_file, "bluetoothd [PodsGrant]: image index for `bluetoothd` not found.\n");
-				fclose(err_file);
-			}
-			abort();
-		}
-		#endif
-		MSHookFunction((void*)(bin_vmaddr_slide+map_entry->first_hook_addr), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
-		MSHookFunction((void*)(bin_vmaddr_slide+map_entry->ability_func_addr), (void*)&abilityFunc, (void**)&abilityFuncOrig);
-		if(map_entry->support_remote_volume_change_addr) {
-			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->support_remote_volume_change_addr), (void*)&supportRemoteVolumeChange, (void**)&supportRemoteVolumeChangeOriginal);
-		}
-		if(map_entry->recv_logging_handler_addr) {
-			MSHookFunction((void*)(bin_vmaddr_slide+map_entry->recv_logging_handler_addr), (void*)recvLoggingHandler, (void**)&recvLoggingHandlerOriginal);
-		}
-		//MSHookFunction((void*)(bin_vmaddr_slide+0x100538D64), (void*)my_os_log_impl, (void**)&orig_os_log_impl);
-		map_entry++;
-		break;
+		abort();
 	}
-	//fprintf(log_file, "INIT OK\n");
-	//fflush(log_file);
+	#endif
+	MSHookFunction((void*)(bin_vmaddr_slide+all_addr[0]), (void *)&my_1002E1F9C, (void**)&orig_1002E1F9C);
+	MSHookFunction((void*)(bin_vmaddr_slide+all_addr[1]), (void *)&abilityFunc, (void**)&abilityFuncOrig);
+	if(all_addr[2])
+		MSHookFunction((void*)(bin_vmaddr_slide+all_addr[2]), (void *)&supportRemoteVolumeChange, (void**)&supportRemoteVolumeChangeOriginal);
 }

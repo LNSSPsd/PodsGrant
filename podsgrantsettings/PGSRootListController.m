@@ -28,8 +28,9 @@
 }
 
 - (instancetype)initWithStyle:(UITableViewStyle)style {
-	check_update_in_progress=0;
+	//check_update_in_progress=0;
 	PGS_readSettings_to(&_configuration, 1);
+	found_addr=PGS_findAddresses(addr_arr,&pid_offset);
 	return [super initWithStyle:UITableViewStyleGrouped];
 }
 
@@ -38,37 +39,18 @@
 }
 
 - (NSInteger)tableView:(id)tv numberOfRowsInSection:(NSInteger)section {
-	if(section==1)
-		return 1; // Customizable address map not ready yet
-	//if(section==1)
-	//	return 2;
+	if(!section||section==1)
+		return 1;
 	if(section==2)
-		return 5;
-	return 1;
-}
-
-- (NSInteger)numberOfSectionsInTableView:(id)tv {
+		return 4;
 	return 3;
 }
 
-- (NSString *)tableView:(id)tv titleForHeaderInSection:(NSInteger)section {
-	return nil;
+- (NSInteger)numberOfSectionsInTableView:(id)tv {
+	return 4;
 }
 
-- (NSString *)tableView:(id)tv titleForFooterInSection:(NSInteger)sec {
-	if(sec==0) {
-		NSOperatingSystemVersion os_version=[[NSProcessInfo processInfo] operatingSystemVersion];
-		const struct address_map_entry *map_entry=(const struct address_map_entry *)&address_map;
-		while(map_entry->version_major!=0) {
-			if(!(os_version.majorVersion==map_entry->version_major&&os_version.minorVersion==map_entry->version_minor&&(map_entry->version_patch==255||os_version.patchVersion==map_entry->version_patch))) {
-				map_entry++;
-				continue;
-			}
-			return nil;
-		}
-		return NSSTR("Your iOS version is not supported, you may only get popup dialog working. Please submit an issue on GitHub to request support.");
-	}
-	//return sec==1?[NSString stringWithUTF8String:""]:nil;
+- (NSString *)tableView:(id)tv titleForHeaderInSection:(NSInteger)section {
 	return nil;
 }
 
@@ -92,6 +74,10 @@
 }
 
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+	if(indexPath.section==3) {
+		[tv deselectRowAtIndexPath:indexPath animated:0];
+		return;
+	}
 	if(indexPath.section==2) {
 		if(!indexPath.row) {
 			size_t procs_size;
@@ -132,7 +118,7 @@
 			NSTextCheckingResult *_match=[versionInfoRegex firstMatchInString:status_file options:0 range:NSMakeRange(0, [status_file length])];
 			if(![_match numberOfRanges]||[_match numberOfRanges]<=2) {
 				regex_error_pos:{}
-				UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, the tweak isn't installed property." preferredStyle:UIAlertControllerStyleAlert];
+				UIAlertController *failed_alert=[UIAlertController alertControllerWithTitle:@"Failed" message:@"Failed to check for update, this tweak isn't installed property." preferredStyle:UIAlertControllerStyleAlert];
 				[failed_alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
 				[self presentViewController:failed_alert animated:1 completion:nil];
 				return;
@@ -258,7 +244,7 @@
 		custom_address_map_btn.textLabel.text=NSSTR("Custom bluetoothd address mapping");
 		custom_address_map_btn.accessoryType=UITableViewCellAccessoryDisclosureIndicator;
 		return custom_address_map_btn;
-	}else{
+	}else if(indexPath.section==2){
 		if(indexPath.row==2) {
 			UITableViewCell *source_code_btn=[UITableViewCell new];
 			source_code_btn.textLabel.text=NSSTR("Source Code");
@@ -284,6 +270,31 @@
 		kill_daemons_btn.textLabel.text=NSSTR("Kill Daemons (Apply Settings)");
 		kill_daemons_btn.textLabel.textColor=[UIColor colorWithRed:0 green:0.478 blue:1 alpha:1];
 		return kill_daemons_btn;
+	}else{
+		UITableViewCell *dcell=[UITableViewCell new];
+		dcell.textLabel.enabled=0;
+		dcell.selectionStyle=UITableViewCellSelectionStyleNone;
+		if(indexPath.row==0) {
+			if(!found_addr) {
+				dcell.textLabel.text=@"Address finder couldn't locate core functions";
+				return dcell;
+			}
+			dcell.textLabel.text=@"Addresses:";
+			
+		}else if(indexPath.row==1){
+			if(!found_addr) {
+				dcell.textLabel.text=@"Functionalities of this tweak will be limited";
+				return dcell;
+			}
+			dcell.textLabel.text=[NSString stringWithFormat:@"%p, %p, %p",(void*)addr_arr[0],(void*)addr_arr[1],(void*)addr_arr[2]];
+		}else if(indexPath.row==2){
+			if(!found_addr) {
+				dcell.textLabel.text=@"Please consider submitting an issue.";
+				return dcell;
+			}
+			dcell.textLabel.text=[NSString stringWithFormat:@"Product ID offset: %u",pid_offset];
+		}
+		return dcell;
 	}
 	return nil;
 }
