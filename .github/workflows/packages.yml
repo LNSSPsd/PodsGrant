@@ -32,9 +32,9 @@ jobs:
       - name: Build packages
         run: |
           export THEOS=~/theos
-          make -j2 FINALPACKAGE=1
+          make -j2 package FINALPACKAGE=1
           make clean
-          make -j2 FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          make -j2 package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
       - name: Upload non-rootless package
         uses: actions/upload-artifact@v7
         with:
