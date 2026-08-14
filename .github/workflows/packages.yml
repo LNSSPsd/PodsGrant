@@ -29,10 +29,12 @@ jobs:
           curl -sL https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.3.0/swift-5.8-ubuntu20.04.tar.xz | tar -xJf - -C ~/theos/toolchain/
           sed -i 's/$(ECHO_MERGING)$(ECHO_UNBUFFERED)$(TARGET_LIPO) $(foreach ARCH,$(TARGET_ARCHS),-arch $(ARCH) $(THEOS_OBJ_DIR)\/$(ARCH)\/$(1)) -create -output "$$@"$(ECHO_END)/\0\nifeq ($(THEOS_PACKAGE_SCHEME),rootless)\nifneq ($(filter arm64e,$(TARGET_ARCHS)),)\n~\/theos\/allemande\/allemande "$$@"\nendif\nendif\n/' ~/theos/makefiles/instance/rules.mk
           cd ~/theos && git clone https://github.com/p0358/allemande --depth 1 && cd allemande && g++ -std=c++20 -o allemande main.cpp
-      - name: Build non-rootless package
-        run: make clean; make -j2 FINALPACKAGE=1
-      - name: Build rootless package
-        run: make clean; make -j2 FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+      - name: Build packages
+        run: |
+          export THEOS=~/theos
+          make -j2 FINALPACKAGE=1
+          make clean
+          make -j2 FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
       - name: Upload non-rootless package
         uses: actions/upload-artifact@v7
         with:
