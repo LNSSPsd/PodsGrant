@@ -24,7 +24,7 @@ jobs:
       - name: Install theos, etc.
         if: steps.cache-theos.outputs.cache-hit != 'true'
         run: |
-          git clone https://github.com/theos/theos.git -q --depth 1 --recursive
+          git clone https://github.com/theos/theos.git -q --depth 1 --recursive ~/theos
           cd ~/theos && rm -rf sdks && git clone https://github.com/theos/sdks.git -q --depth 1
           curl -sL https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.3.0/swift-5.8-ubuntu20.04.tar.xz | tar -xJf - -C ~/theos/toolchain/
           sed -i 's/$(ECHO_MERGING)$(ECHO_UNBUFFERED)$(TARGET_LIPO) $(foreach ARCH,$(TARGET_ARCHS),-arch $(ARCH) $(THEOS_OBJ_DIR)\/$(ARCH)\/$(1)) -create -output "$$@"$(ECHO_END)/\0\nifeq ($(THEOS_PACKAGE_SCHEME),rootless)\nifneq ($(filter arm64e,$(TARGET_ARCHS)),)\n~\/theos\/allemande\/allemande "$$@"\nendif\nendif\n/' ~/theos/makefiles/instance/rules.mk
