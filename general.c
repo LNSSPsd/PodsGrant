@@ -146,16 +146,16 @@ static uint32_t match_arr_1[]={
 };
 
 static uint32_t match_arr_2[]={
-	// LDR W8, [ X0, * ]
-	0xffc003ff, 0xb9400008,
-	// CMP W8, #0x4C
-	0xffffffff, 0x7101311f,
+	// LDR W*, [ X0, * ]
+	0xffc003e0, 0xb9400000,
+	// CMP W*, #0x4C
+	0xfffffc1f, 0x7101301f,
 	// B.NE *
 	0xff00001f, 0x54000001,
 	// LDR W*, [ X*, * ]
 	0xffc00000, 0xb9400000,
-	// MOV W8, #0xFFFFDFFE
-	0xffffffff, 0x12840028
+	// MOV W*, #0xFFFFDFFE
+	0xffffffe0, 0x12840020
 };
 
 static uint32_t match_arr_3[]={
