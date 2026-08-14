@@ -30,6 +30,7 @@ uint32_t match_arr_1[]={
 	//0xffffffff, 0xd65f03c0
 };
 
+#if 0
 uint32_t match_arr_2[]={
 	// LDR W8, [ X0, * ]
 	0xffc003ff, 0xb9400008,
@@ -41,6 +42,23 @@ uint32_t match_arr_2[]={
 	0xffc00000, 0xb9400000,
 	// MOV W8, #0xFFFFDFFE
 	0xffffffff, 0x12840028
+};
+#endif
+static uint32_t match_arr_2[]={
+	// LDR W*, [ X0, * ]
+	0xffc003e0, 0xb9400000,
+	// CMP W*, #0x4C
+	0xfffffc1f, 0x7101301f,
+	// B.NE *
+	0xff00001f, 0x54000001,
+	// LDR W*, [ X*, * ]
+	0xffc00000, 0xb9400000,
+	// MOV W*, #0xFFFFDFFE
+	0xffffffe0, 0x12840020,
+	// ADD W*, W*, W*
+	0xff000000, 0x0b000000,
+	// CMP W*, #0x11
+	0xfffffc1f, 0x7100441f
 };
 
 uint32_t match_arr_3[]={
@@ -118,8 +136,8 @@ int main(int argc, char *argv[]) {
 	if(second_match_cnt!=1) {
 		printf("ERROR: Too many results for second addr!\n");
 	}
-	if(second_match_cnt!=0) {
-		printf("Found second addr: %p\n",(void*)(0x100000000+results[0]));
+	for(int i=0;i<second_match_cnt;i++) {
+		printf("Found second addr: %p\n",(void*)(0x100000000+results[i]));
 	}
 	int third_match_cnt=match_instructions(results,16,match_arr_3,sizeof(match_arr_3),bin);
 	for(int i=0;i<third_match_cnt;i++) {

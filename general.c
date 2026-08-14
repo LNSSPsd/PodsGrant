@@ -155,7 +155,11 @@ static uint32_t match_arr_2[]={
 	// LDR W*, [ X*, * ]
 	0xffc00000, 0xb9400000,
 	// MOV W*, #0xFFFFDFFE
-	0xffffffe0, 0x12840020
+	0xffffffe0, 0x12840020,
+	// ADD W*, W*, W*
+	0xff000000, 0x0b000000,
+	// CMP W*, #0x11
+	0xfffffc1f, 0x7100441f
 };
 
 static uint32_t match_arr_3[]={
