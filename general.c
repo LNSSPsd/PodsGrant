@@ -231,7 +231,7 @@ int PGS_findAddresses(uint64_t *addresses,uint32_t *product_id_offset) {
 		fclose(bin);
 		return 0;
 	}
-	fseek(bin,results[0]-4,SEEK_SET)
+	fseek(bin,results[0]-4,SEEK_SET);
 	uint32_t pre_ldr_inst2;
 	fread(&pre_ldr_inst2,1,4,bin);
 	if((pre_ldr_inst2&0xffe0ffe0)==0xaa0003e0)
