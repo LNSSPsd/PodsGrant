@@ -231,6 +231,11 @@ int PGS_findAddresses(uint64_t *addresses,uint32_t *product_id_offset) {
 		fclose(bin);
 		return 0;
 	}
+	fseek(bin,results[0]-4,SEEK_SET)
+	uint32_t pre_ldr_inst2;
+	fread(&pre_ldr_inst2,1,4,bin);
+	if((pre_ldr_inst2&0xffe0ffe0)==0xaa0003e0)
+		results[0]-=4; // magic
 	addresses[1]=(uint64_t)results[0]+0x100000000;
 	addresses[2]=0;
 	int third_match_cnt=match_instructions(results,16,match_arr_3,sizeof(match_arr_3),bin);

@@ -137,6 +137,11 @@ int main(int argc, char *argv[]) {
 		printf("ERROR: Too many results for second addr!\n");
 	}
 	for(int i=0;i<second_match_cnt;i++) {
+		fseek(bin,results[i]-4,SEEK_SET);
+		uint32_t pre_ldr_inst2;
+		fread(&pre_ldr_inst2,1,4,bin);
+		if((pre_ldr_inst2&0xffe0ffe0)==0xaa0003e0)
+			results[i]-=4; // magic
 		printf("Found second addr: %p\n",(void*)(0x100000000+results[i]));
 	}
 	int third_match_cnt=match_instructions(results,16,match_arr_3,sizeof(match_arr_3),bin);
