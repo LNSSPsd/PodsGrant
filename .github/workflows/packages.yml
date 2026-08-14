@@ -1,0 +1,51 @@
+name: Make packages
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-all:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Cache theos
+        id: cache-theos
+        uses: actions/cache@v6
+        with:
+          key: pg-theos-cache1
+          path: ~/theos
+
+      - name: Install theos, etc.
+        if: steps.cache-theos.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/theos/theos.git -q --depth 1 --recursive
+          cd ~/theos && rm -rf sdks && git clone https://github.com/theos/sdks.git -q --depth 1
+          curl -sL https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.3.0/swift-5.8-ubuntu20.04.tar.xz | tar -xJf - -C ~/theos/toolchain/
+          sed -i 's/$(ECHO_MERGING)$(ECHO_UNBUFFERED)$(TARGET_LIPO) $(foreach ARCH,$(TARGET_ARCHS),-arch $(ARCH) $(THEOS_OBJ_DIR)\/$(ARCH)\/$(1)) -create -output "$$@"$(ECHO_END)/\0\nifeq ($(THEOS_PACKAGE_SCHEME),rootless)\nifneq ($(filter arm64e,$(TARGET_ARCHS)),)\n~\/theos\/allemande\/allemande "$$@"\nendif\nendif\n/' ~/theos/makefiles/instance/rules.mk
+          cd ~/theos && git clone https://github.com/p0358/allemande --depth 1 && cd allemande && g++ -std=c++20 -o allemande main.cpp
+      - name: Build non-rootless package
+        run: make clean; make -j2 FINALPACKAGE=1
+      - name: Build rootless package
+        run: make clean; make -j2 FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+      - name: Upload non-rootless package
+        uses: actions/upload-artifact@v7
+        with:
+          name: podsgrant-${{ github.sha }}
+          path: packages/com*-arm.deb
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Upload rootless package
+        uses: actions/upload-artifact@v7
+        with:
+          name: ROOTLESS-podsgrant-${{ github.sha }}
+          path: packages/com*-arm64.deb
+          if-no-files-found: error
+          retention-days: 3
+
